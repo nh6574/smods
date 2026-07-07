@@ -207,35 +207,35 @@ payload = '-- removed by SMODS'
 # special cases:
 # extra_value should be transferred
 # name, effect, set, extra should always be overwritten
-[[patches]]
-[patches.regex]
-target = 'card.lua'
-pattern = '''
-(?<indent>[\t ]*)self\.ability = (\{[\s\S]*?
-[\t ]*\})
-'''
-position = 'at'
-line_prepend = '$indent'
-payload = '''
-local new_ability = $2
-self.ability = self.ability or {}
-new_ability.extra_value = nil
-new_ability.debuff_sources = {}
-self.ability.extra_value = self.ability.extra_value or 0
-for k, v in pairs(new_ability) do
-    self.ability[k] = v
-end
+# [[patches]]
+# [patches.regex]
+# target = 'card.lua'
+# pattern = '''
+# (?<indent>[\t ]*)self\.ability = (\{[\s\S]*?
+# [\t ]*\})
+# '''
+# position = 'at'
+# line_prepend = '$indent'
+# payload = '''
+# local new_ability = $2
+# self.ability = self.ability or {}
+# new_ability.extra_value = nil
+# new_ability.debuff_sources = {}
+# self.ability.extra_value = self.ability.extra_value or 0
+# for k, v in pairs(new_ability) do
+#     self.ability[k] = v
+# end
 
--- handles card_limit/extra_slots_used changes
-self.ability.card_limit = self.ability.card_limit + (center.config.card_limit or 0)
-self.ability.extra_slots_used = self.ability.extra_slots_used + (center.config.extra_slots_used or 0)
+# -- handles card_limit/extra_slots_used changes
+# self.ability.card_limit = self.ability.card_limit + (center.config.card_limit or 0)
+# self.ability.extra_slots_used = self.ability.extra_slots_used + (center.config.extra_slots_used or 0)
 
 
--- reset keys do not persist on ability change
-for _, k in ipairs(SMODS.get_ability_reset_keys(self) or {}) do
-    self.ability[k] = new_ability[k]
-end
-'''
+# -- reset keys do not persist on ability change
+# for _, k in ipairs(SMODS.get_ability_reset_keys(self) or {}) do
+#     self.ability[k] = new_ability[k]
+# end
+# '''
 
 ## Fix crash if self.config.card == nil for non-vanilla set_ability() calls
 # Card:set_ability()
