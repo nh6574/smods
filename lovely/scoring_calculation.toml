@@ -88,7 +88,7 @@ target = 'engine/ui.lua'
 match_indent = true
 position = 'before'
 pattern = '''
-if self == G.CONTROLLER.text_input_hook then 
+if self == G.CONTROLLER.text_input_hook then
 '''
 payload = '''
 if self.config and self.config.func then
@@ -103,7 +103,7 @@ end
 target = 'functions/common_events.lua'
 position = 'at'
 line_prepend = '$indent'
-pattern = '''(?<indent>[\t ]*)if vals\.[A-z0-9\n\t .~=()'\-+,<;>:{}]+mult:juice_up\(\) end\n[\t ]+end'''
+pattern = '''(?<indent>[\t ]*)if vals\.[A-z0-9\r\n\t .~=()'\-+,<;>:{}]+mult:juice_up\(\) end\r\n[\t ]+end'''
 payload = '''
 for name, parameter in pairs(SMODS.Scoring_Parameters) do
     if vals[name] and G.GAME.current_round.current_hand[name] ~= vals[name] then
@@ -117,10 +117,10 @@ for name, parameter in pairs(SMODS.Scoring_Parameters) do
         G.hand_text_area[name] = G.hand_text_area[name] or G.HUD:get_UIE_by_ID('hand_'..name) or nil
         if G.hand_text_area[name] then
             G.hand_text_area[name]:update(0)
-            if vals.StatusText then 
+            if vals.StatusText then
                 attention_text({
                     text =delta,
-                    scale = 0.8, 
+                    scale = 0.8,
                     hold = 1,
                     cover = G.hand_text_area[name].parent,
                     cover_colour = mix_colours(parameter.colour, col, 0.1),
@@ -212,14 +212,14 @@ payload = '''
     SMODS.last_hand_score = SMODS.calculate_round_score()
     G.E_MANAGER:add_event(Event({
       trigger = 'immediate',
-      func = (function() 
+      func = (function()
         for name, parameter in pairs(SMODS.Scoring_Parameters) do
             parameter.current = parameter.default_value
         end
-        return true 
+        return true
       end)
     }))
-    
+
 '''
 
 # Level Up Hand uses scoring parameters
@@ -320,13 +320,13 @@ G.C.UI_CHIPLICK = G.C.UI_CHIPLICK or {1, 1, 1, 1}
 
   G.ARGS.flame_handler = G.ARGS.flame_handler or {
     chips = {
-      id = 'flame_chips', 
+      id = 'flame_chips',
       arg_tab = 'chip_flames',
       colour = G.C.UI_CHIPS,
       accent = G.C.UI_CHIPLICK
     },
     mult = {
-      id = 'flame_mult', 
+      id = 'flame_mult',
       arg_tab = 'mult_flames',
       colour = G.C.UI_MULT,
       accent = G.C.UI_MULTLICK

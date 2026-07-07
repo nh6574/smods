@@ -9,7 +9,7 @@ priority = -10
 [patches.regex]
 target = 'functions/UI_definitions.lua'
 pattern = '''
-(?<indent>[\t ]*)tab_definition_function = G.UIDEF.run_setup_option,[\n\t ]*tab_definition_function_args = 'New Run'
+(?<indent>[\t ]*)tab_definition_function = G.UIDEF.run_setup_option,[\r\n\t ]*tab_definition_function_args = 'New Run'
 '''
 position = 'at'
 line_prepend = "$indent"

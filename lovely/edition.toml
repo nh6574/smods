@@ -114,7 +114,7 @@ match_indent = true
 [[patches]]
 [patches.regex]
 target = "card.lua"
-pattern = '(?<indent>[\t ]*)self.ex([a-z._\s=+(0-9)]*)\n([\t ]*)([a-z._\s=+(0-9)]*)or 0\)'
+pattern = '(?<indent>[\t ]*)self.ex([a-z._\s=+(0-9)]*)\r\n([\t ]*)([a-z._\s=+(0-9)]*)or 0\)'
 position = "at"
 payload = '''
 for k, v in pairs(G.P_CENTER_POOLS.Edition) do
@@ -211,7 +211,7 @@ match_indent = true
 [[patches]]
 [patches.regex]
 target = 'functions/common_events.lua'
-pattern = '''(?<indent>[\t ]*)(?<edi>local edition = poll_edition\('edi'\.\.\(key_append or ''\)\.\.G\.GAME\.round_resets\.ante\)(\n.*){2})'''
+pattern = '''(?<indent>[\t ]*)(?<edi>local edition = poll_edition\('edi'\.\.\(key_append or ''\)\.\.G\.GAME\.round_resets\.ante\)(\r\n.*){2})'''
 position = 'at'
 line_prepend = '$indent'
 payload = '''

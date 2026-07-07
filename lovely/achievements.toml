@@ -9,7 +9,7 @@ priority = -10
 [[patches]]
 [patches.regex]
 target = "functions/common_events.lua"
-pattern = '''(?<indent>[\t ]*)if G\.F_NO_ACHIEVEMENTS then return end[\n\s]*?--\|FROM LOCAL SETTINGS FILE'''
+pattern = '''(?<indent>[\t ]*)if G\.F_NO_ACHIEVEMENTS then return end[\r\n\s]*?--\|FROM LOCAL SETTINGS FILE'''
 position = 'before'
 # match_indent = true
 line_prepend = '$indent'
@@ -17,7 +17,7 @@ payload = '''
 G.SETTINGS.ACHIEVEMENTS_EARNED = G.SETTINGS.ACHIEVEMENTS_EARNED or {}
 for k, v in pairs(G.ACHIEVEMENTS) do
     if not v.key then v.key = k end
-    for kk, vv in pairs(G.SETTINGS.ACHIEVEMENTS_EARNED) do 
+    for kk, vv in pairs(G.SETTINGS.ACHIEVEMENTS_EARNED) do
         if G.ACHIEVEMENTS[kk] and G.ACHIEVEMENTS[kk].mod then
             G.ACHIEVEMENTS[kk].earned = true
         end
@@ -62,7 +62,7 @@ if not G.ACHIEVEMENTS then fetch_achievements() end
 G.SETTINGS.ACHIEVEMENTS_EARNED[achievement_name] = true
 G:save_progress()
 
-if G.ACHIEVEMENTS[achievement_name] and G.ACHIEVEMENTS[achievement_name].mod then 
+if G.ACHIEVEMENTS[achievement_name] and G.ACHIEVEMENTS[achievement_name].mod then
     if not G.ACHIEVEMENTS[achievement_name].earned then
         --|THIS IS THE FIRST TIME THIS ACHIEVEMENT HAS BEEN EARNED
         achievement_set = true
@@ -71,7 +71,7 @@ if G.ACHIEVEMENTS[achievement_name] and G.ACHIEVEMENTS[achievement_name].mod the
     G.ACHIEVEMENTS[achievement_name].earned = true
 end
 
-if achievement_set then 
+if achievement_set then
     notify_alert(achievement_name)
     return true
 end

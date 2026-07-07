@@ -5,7 +5,7 @@ priority = -10
 
 #modulate_sound()
 [[patches]]
-[patches.pattern] 
+[patches.pattern]
 target = 'functions/misc_functions.lua'
 pattern = 'G.SOUND_MANAGER.channel:push(G.ARGS.push)'
 match_indent = true
@@ -17,7 +17,7 @@ local out_sync = (SMODS.Sounds[SMODS.previous_track] or {}).sync
 local should_sync = true
 if (type(in_sync) == 'table' and not in_sync[SMODS.previous_track]) or in_sync == false then should_sync = false end
 if (type(out_sync) == 'table' and not out_sync[desired_track]) or out_sync == false then should_sync = false end
-if 
+if
     SMODS.previous_track and SMODS.previous_track ~= desired_track and
     not should_sync
 then
@@ -27,7 +27,7 @@ end
 SMODS.previous_track = desired_track'''
 
 [[patches]]
-[patches.pattern] 
+[patches.pattern]
 target = 'functions/misc_functions.lua'
 pattern = 'G.ARGS.push.ambient_control = G.SETTINGS.ambient_control'
 match_indent = true
@@ -57,14 +57,14 @@ end
 '''
 
 [[patches]]
-[patches.pattern] 
+[patches.pattern]
 target = 'functions/misc_functions.lua'
 pattern = "(G.STATE == G.STATES.SPLASH and '') or"
 match_indent = true
 position = 'after'
 payload = 'SMODS.Sound:get_current_music() or'
 
-# PLAY_SOUND 
+# PLAY_SOUND
 [[patches]]
 [patches.pattern]
 target = 'engine/sound_manager.lua'
@@ -75,7 +75,7 @@ payload = '''
 local c = SMODS_Sounds[args.sound_code]
 local s = c and
 {sound = love.audio.newSource(love.sound.newDecoder(c.data), c.should_stream and 'stream' or 'static'), per = c.per, vol = c.vol } or
-{sound = love.audio.newSource("resources/sounds/"..args.sound_code..'.ogg', should_stream and "stream" or 'static')}''' 
+{sound = love.audio.newSource("resources/sounds/"..args.sound_code..'.ogg', should_stream and "stream" or 'static')}'''
 
 # pass in custom sounds
 [[patches]]
@@ -136,7 +136,7 @@ payload = 'RESTART_MUSIC(request)'
 [[patches]]
 [patches.regex]
 target = 'engine/sound_manager.lua'
-pattern = """(?<indent>[\t ]*)function MODULATE\\(args\\)(\n.*){9}"""
+pattern = """(?<indent>[\t ]*)function MODULATE\\(args\\)(\r\n.*){9}"""
 line_prepend = '$indent'
 position = 'at'
 payload = """function MODULATE(args)
@@ -154,7 +154,7 @@ pattern = "for _, s in pairs(v) do"
 match_indent = true
 position = 'at'
 payload = """current_track = args.desired_track
-for _, s in pairs(v) do""" 
+for _, s in pairs(v) do"""
 
 # [[patches]]
 # [patches.pattern]

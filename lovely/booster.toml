@@ -58,7 +58,7 @@ local _size = math.max(1, self.ability.extra + (G.GAME.modifiers.booster_size_mo
 [[patches]]
 [patches.regex]
 target = "card.lua"
-pattern = '''(?<indent>[\t ]*)if self\.ability\.name:find\('Arcana'\) then[\t\n ]*if G\.GAME\.used_vouchers\.v_omen_globe and pseudorandom\('omen_globe'\) > 0\.8 then''' # Possibly try to target something else
+pattern = '''(?<indent>[\t ]*)if self\.ability\.name:find\('Arcana'\) then[\t\r\n ]*if G\.GAME\.used_vouchers\.v_omen_globe and pseudorandom\('omen_globe'\) > 0\.8 then''' # Possibly try to target something else
 position = "at"
 payload = '''local flags = SMODS.calculate_context({create_booster_card = true, booster = self, index = i})
 if flags.booster_create_flags then
@@ -258,7 +258,7 @@ match_indent = true
 [[patches]]
 [patches.regex]
 target = "card.lua"
-pattern = '''(?<indent>[\t ]*)ease_dollars\(-self\.cost\)\n[\s\S]{8}inc_career_stat\('c_shop_dollars_spent', self\.cost\)'''
+pattern = '''(?<indent>[\t ]*)ease_dollars\(-self\.cost\)\r\n[\s\S]{8}inc_career_stat\('c_shop_dollars_spent', self\.cost\)'''
 position = "at"
 payload = '''
 if self.cost ~= 0 then
@@ -333,9 +333,9 @@ if (card.area == G.pack_cards and G.pack_cards) and card.ability.consumeable and
         base_attach.children.select = G.UIDEF.card_focus_button{
             card = card, parent = base_attach, type = 'custom',
             func = 'can_select_from_booster', button = 'use_card', card_width = card_width,
-            label = select_button_text, align = 'cl', minw = 1.1, 
+            label = select_button_text, align = 'cl', minw = 1.1,
             focus_button = 'leftshoulder', focus_button_orientation = 'tli',
-            focus_button_x_offset = 0.1, align_left = true, 
+            focus_button_x_offset = 0.1, align_left = true,
         }
     else
         base_attach.children.use = G.UIDEF.card_focus_button{

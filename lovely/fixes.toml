@@ -20,7 +20,7 @@ payload = "args = args or {}"
 [[patches]]
 [patches.regex]
 target = 'main.lua'
-pattern = "(?<indent>[\t ]*)if not \\(st.init and st:init\\(\\)\\) then\n[\t ]*(?<quit>love.event.quit\\(\\))"
+pattern = "(?<indent>[\t ]*)if not \\(st.init and st:init\\(\\)\\) then\r\n[\t ]*(?<quit>love.event.quit\\(\\))"
 position = 'at'
 root_capture = 'quit'
 payload = 'st = nil'
@@ -662,7 +662,7 @@ match_indent = true
 position = 'at'
 pattern = '''
 for k, v in pairs(other.ability) do
-    if type(v) == 'table' then 
+    if type(v) == 'table' then
         new_card.ability[k] = copy_table(v)
     else
         new_card.ability[k] = v
@@ -683,7 +683,7 @@ return new_card
 '''
 payload = '''
 for k, v in pairs(other.ability) do
-    if type(v) == 'table' then 
+    if type(v) == 'table' then
         new_card.ability[k] = copy_table(v)
     else
         new_card.ability[k] = v
@@ -838,7 +838,7 @@ target = 'card.lua'
 match_indent = true
 position = 'after'
 pattern = '''
-if v ~= chosen_joker then 
+if v ~= chosen_joker then
 '''
 payload = '''
 v.getting_sliced = true

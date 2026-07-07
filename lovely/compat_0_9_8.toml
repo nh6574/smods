@@ -19,7 +19,7 @@ match_indent = true
 [[patches]]
 [patches.regex]
 target = "functions/common_events.lua"
-pattern = '(?<indent>[\t ]*)function generate_card_ui\([^)]*\)\n'
+pattern = '(?<indent>[\t ]*)function generate_card_ui\([^)]*\)\r\n'
 position = "after"
 line_prepend = '$indent'
 payload = """
@@ -35,4 +35,3 @@ pattern = "for _, v in ipairs(info_queue) do"
 position = 'before'
 payload = "SMODS.compat_0_9_8.generate_UIBox_ability_table_card = nil"
 match_indent = true
-

@@ -166,7 +166,7 @@ if SMODS.to_area then to = SMODS.to_area; SMODS.to_area = nil end
 [[patches]]
 [patches.regex]
 target = 'blind.lua'
-pattern = "(?<indent>[\t ]*)if self.name == 'Cerulean Bell' then\n"
+pattern = "(?<indent>[\t ]*)if self.name == 'Cerulean Bell' then\r\n"
 position = 'before'
 line_prepend = '$indent'
 payload = '''
@@ -323,7 +323,7 @@ table.insert(blind_matrix[row], {
 [[patches]]
 [patches.regex]
 target = 'functions/UI_definitions.lua'
-pattern = '[\t ]*\(k==6 or k ==16 or k == 26\) and \{n=G.UIT.B, config=\{h=0.2,w=0.5\}\} or nil,\n[\t ]*\{n=G.UIT.O, config=\{object = temp_blind, focus_with_object = true\}\},\n[\t ]*\(k==5 or k ==15 or k == 25\) and \{n=G.UIT.B, config=\{h=0.2,w=0.5\}\} or nil,\n[\t ]*\}\}'
+pattern = '[\t ]*\(k==6 or k ==16 or k == 26\) and \{n=G.UIT.B, config=\{h=0.2,w=0.5\}\} or nil,\r\n[\t ]*\{n=G.UIT.O, config=\{object = temp_blind, focus_with_object = true\}\},\r\n[\t ]*\(k==5 or k ==15 or k == 25\) and \{n=G.UIT.B, config=\{h=0.2,w=0.5\}\} or nil,\r\n[\t ]*\}\}'
 position = 'at'
 payload = ''
 
@@ -513,7 +513,7 @@ payload = "local temp_blind = AnimatedSprite(0,0,1,1, G.ANIMATION_ATLAS[v.atlas 
 [[patches]]
 [patches.regex]
 target = 'blind.lua'
-pattern = "end\n(?<indent>[\t ]*)if self.name == ['\"](?<ability>.*?)['\"]"
+pattern = "end\r\n(?<indent>[\t ]*)if self.name == ['\"](?<ability>.*?)['\"]"
 position = 'at'
 payload = "elseif self.name == '$ability'"
 

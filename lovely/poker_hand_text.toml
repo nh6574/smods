@@ -18,12 +18,12 @@ payload = 'function level_up_hand(card, hand, instant, amount, statustext)'
 target = 'functions/common_events.lua'
 position = 'at'
 line_prepend = '$indent'
-pattern = '''(?<indent>[\t ]*)if vals\.StatusText[A-z0-9\n\t .~=()'\-+,<;>:{}]+config\.align\n[\t ]+\}\)\n[\t ]+end'''
+pattern = '''(?<indent>[\t ]*)if vals\.StatusText[A-z0-9\r\n\t .~=()'\-+,<;>:{}]+config\.align\r\n[\t ]+\}\)\r\n[\t ]+end'''
 payload = '''
 if vals.StatusText then
     local StatusText = {
         text = delta,
-        scale = 0.8, 
+        scale = 0.8,
         hold = 1,
         cover = G.hand_text_area[name].parent,
         cover_colour = mix_colours(parameter.colour, col, 0.1),

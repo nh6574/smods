@@ -21,7 +21,7 @@ payload = '''
 [[patches]]
 [patches.regex]
 target = "game.lua"
-pattern = '(?<indent>[\t ]*)cards_played = \{\n(.*\n){13}[\t ]*\},'
+pattern = '(?<indent>[\t ]*)cards_played = \{\r\n(.*\r\n){13}[\t ]*\},'
 position = 'at'
 line_prepend = '$indent'
 payload = '''
@@ -194,7 +194,7 @@ payload = '''if or_more and (#curr >= num) or (#curr == num) then'''
 [[patches]]
 [patches.regex]
 target = "card.lua"
-pattern = 'function Card:get_nominal\(mod\)\n([\t ]+.*\n)*end'
+pattern = 'function Card:get_nominal\(mod\)\r\n([\t ]+.*\r\n)*end'
 position = 'at'
 payload = '''
 function Card:get_nominal(mod)
@@ -216,7 +216,7 @@ end'''
 [[patches]]
 [patches.regex]
 target = 'card.lua'
-pattern = "(?<indent>[\t ]*)if self.base.value == '2' then self.base.nominal = 2; self.base.id = 2(\n[\t ]+elseif .*)*"
+pattern = "(?<indent>[\t ]*)if self.base.value == '2' then self.base.nominal = 2; self.base.id = 2(\r\n[\t ]+elseif .*)*"
 position = 'at'
 line_prepend = '$indent'
 payload = '''
@@ -228,7 +228,7 @@ self.base.id = rank.id'''
 [[patches]]
 [patches.regex]
 target = 'card.lua'
-pattern = "(?<indent>[\t ]*)if self.base.suit == 'Diamonds' then self.base.suit_nominal = 0.01; self.base.suit_nominal_original = suit_base_nominal_original or 0.001 (\n[\t ]+elseif .*)*"
+pattern = "(?<indent>[\t ]*)if self.base.suit == 'Diamonds' then self.base.suit_nominal = 0.01; self.base.suit_nominal_original = suit_base_nominal_original or 0.001 (\r\n[\t ]+elseif .*)*"
 position = 'at'
 line_prepend = '$indent'
 payload = '''
@@ -290,7 +290,7 @@ payload = 'function tally_sprite(pos, value, tooltip, suit)'
 [[patches]]
 [patches.regex]
 target = 'functions/UI_definitions.lua'
-pattern = "(?<indent>[\t ]*)local SUITS = \\{(\n.*){5}\n[\t ]*local suit_map = \\{'S', 'H', 'C', 'D'\\}"
+pattern = "(?<indent>[\t ]*)local SUITS = \\{(\r\n.*){5}\r\n[\t ]*local suit_map = \\{'S', 'H', 'C', 'D'\\}"
 position = 'at'
 line_prepend = '$indent'
 payload = '''
@@ -328,7 +328,7 @@ end'''
 [[patches]]
 [patches.regex]
 target = 'functions/UI_definitions.lua'
-pattern = '(?<indent>[\t ]*)for j = 1, 4 do\n[\t ]*(?<mid>if SUITS\[suit_map\[j\]\]\[1\] then\n[\t ]*table.sort.*(\n.*)*?)\n[\t ]*0\.42\*G.CARD_H,'
+pattern = '(?<indent>[\t ]*)for j = 1, 4 do\r\n[\t ]*(?<mid>if SUITS\[suit_map\[j\]\]\[1\] then\r\n[\t ]*table.sort.*(\r\n.*)*?)\r\n[\t ]*0\.42\*G.CARD_H,'
 position = 'at'
 line_prepend = '$indent'
 payload = '''

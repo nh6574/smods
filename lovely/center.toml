@@ -9,7 +9,7 @@ priority = -10
 [[patches]]
 [patches.regex]
 target = "card.lua"
-pattern = "(?<indent>[\t ]*)if not G\\.OVERLAY_MENU then \n"
+pattern = "(?<indent>[\t ]*)if not G\\.OVERLAY_MENU then \r\n"
 position = 'before'
 payload = '''
 local obj = self.config.center
@@ -86,7 +86,7 @@ end'''
 [[patches]]
 [patches.regex]
 target = 'card.lua'
-pattern = "(?<else>else)\n[\t ]*if self.ability.name == 'Loyalty Card' then\n[\t ]*self.ability.loyalty_remaining"
+pattern = "(?<else>else)\r\n[\t ]*if self.ability.name == 'Loyalty Card' then\r\n[\t ]*self.ability.loyalty_remaining"
 root_capture = 'else'
 position = 'at'
 payload = 'elseif context.joker_main then'
@@ -231,7 +231,7 @@ end'''
 [[patches]]
 [patches.regex]
 target = 'functions/UI_definitions.lua'
-pattern = "(?<indent>[\t ]*)(?<if>if AUT.badges.card_type or AUT.badges.force_rarity then)\n[\t ]*(?<rest>.*)\n[\t ]*end"
+pattern = "(?<indent>[\t ]*)(?<if>if AUT.badges.card_type or AUT.badges.force_rarity then)\r\n[\t ]*(?<rest>.*)\r\n[\t ]*end"
 line_prepend = '$indent'
 position = 'at'
 payload = '''
@@ -279,7 +279,7 @@ end
 [[patches]]
 [patches.regex]
 target = 'functions/misc_functions.lua'
-pattern = "(?<indent>[\t ]*)if v.set == 'Planet' then(\n[\t ]*.*){15}"
+pattern = "(?<indent>[\t ]*)if v.set == 'Planet' then(\r\n[\t ]*.*){15}"
 line_prepend = '$indent'
 position = 'at'
 payload = '''
@@ -294,7 +294,7 @@ end'''
 [[patches]]
 [patches.regex]
 target = 'functions/misc_functions.lua'
-pattern = "[\t ]*tarots = \\{tally = 0, of = 0\\},\n(.*\n){2}"
+pattern = "[\t ]*tarots = \\{tally = 0, of = 0\\},\r\n(.*\r\n){2}"
 line_prepend = '$indent'
 position = 'at'
 payload = ''
@@ -332,7 +332,7 @@ end
 [[patches]]
 [patches.regex]
 target = 'functions/UI_definitions.lua'
-pattern = "(?<indent>[\t ]*)nodes=\\{\n[\t ]*UIBox_button\\(\\{button = 'your_collection_tarots'(.*\n){3}[\t ]*}"
+pattern = "(?<indent>[\t ]*)nodes=\\{\r\n[\t ]*UIBox_button\\(\\{button = 'your_collection_tarots'(.*\r\n){3}[\t ]*}"
 line_prepend = '$indent'
 position = 'at'
 payload = 'nodes = consumable_nodes'
@@ -367,7 +367,7 @@ end'''
 [[patches]]
 [patches.regex]
 target = 'functions/UI_definitions.lua'
-pattern = '(?<indent>[\t ]*)for _, v in ipairs\((?<li>\{\n(.*\n){5}[\t ]*\})\) do'
+pattern = '(?<indent>[\t ]*)for _, v in ipairs\((?<li>\{\r\n(.*\r\n){5}[\t ]*\})\) do'
 line_prepend = '$indent'
 position = 'at'
 payload = '''
@@ -479,7 +479,7 @@ match_indent = true
 [[patches]]
 [patches.regex]
 target = 'card.lua'
-pattern = '(?<indent>[\t ]*)if self.ability.h_size ~= 0 then\n[\t ]*G\.hand:change_size\(self.ability.h_size\)'
+pattern = '(?<indent>[\t ]*)if self.ability.h_size ~= 0 then\r\n[\t ]*G\.hand:change_size\(self.ability.h_size\)'
 line_prepend = '$indent'
 position = 'before'
 payload = '''
@@ -492,7 +492,7 @@ end'''
 [[patches]]
 [patches.regex]
 target = 'card.lua'
-pattern = '(?<indent>[\t ]*)if self.ability.h_size ~= 0 then\n[\t ]*G\.hand:change_size\(-self.ability.h_size\)'
+pattern = '(?<indent>[\t ]*)if self.ability.h_size ~= 0 then\r\n[\t ]*G\.hand:change_size\(-self.ability.h_size\)'
 line_prepend = '$indent'
 position = 'before'
 payload = '''
@@ -640,7 +640,7 @@ elseif card.config.center.set == 'Spectral' then  G.GAME.consumeable_usage_total
 '''
 position = 'after'
 payload = '''
-else 
+else
     G.GAME.consumeable_usage_total[card.config.center.set:lower()] = G.GAME.consumeable_usage_total[card.config.center.set:lower()] or 0
     G.GAME.consumeable_usage_total[card.config.center.set:lower()] = G.GAME.consumeable_usage_total[card.config.center.set:lower()] + 1
 '''
@@ -715,7 +715,7 @@ function Card:set_sell_value()
 target = 'functions/common_events.lua'
 match_indent = false
 position = 'at'
-pattern = '''    
+pattern = '''
 local card = Card(area.T.x + area.T.w/2, area.T.y, G.CARD_W, G.CARD_H, front, center,
 '''
 payload = '''

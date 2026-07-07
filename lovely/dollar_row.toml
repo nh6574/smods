@@ -53,7 +53,7 @@ match_indent = true
 [[patches]]
 [patches.regex]
 target = "functions/common_events.lua"
-pattern = '''(?<indent>[\t ]*)else\n[\t ]*local dollars_to_loop'''
+pattern = '''(?<indent>[\t ]*)else\r\n[\t ]*local dollars_to_loop'''
 position = "before"
 line_prepend = "$indent"
 payload = '''

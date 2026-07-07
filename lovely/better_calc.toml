@@ -9,7 +9,7 @@ priority = -10
 [[patches]]
 [patches.regex]
 target = 'functions/state_events.lua'
-pattern = '''(?<indent>[\t ]*)(?<handtext>if modded then update_hand_text\(\{sound = 'chips2', modded = modded\}, \{chips = hand_chips, mult = mult\}\) end)(.*\n)*?\s+(?<delimiter>--\++--)'''
+pattern = '''(?<indent>[\t ]*)(?<handtext>if modded then update_hand_text\(\{sound = 'chips2', modded = modded\}, \{chips = hand_chips, mult = mult\}\) end)(.*\r\n)*?\s+(?<delimiter>--\++--)'''
 position = 'at'
 line_prepend = '$indent'
 payload = '''$handtext
@@ -132,7 +132,7 @@ if context.cardarea == G.play and context.main_scoring then
     if x_blind_size > 0 then
         ret.playing_card.x_blind_size = x_blind_size
     end
-    
+
     -- TARGET: main scoring on played cards
 end
 if context.end_of_round and context.cardarea == G.hand and context.playing_card_end_of_round then
@@ -718,7 +718,7 @@ if self_destroy then destroyed = true end
 [[patches]]
 [patches.regex]
 target = "functions/state_events.lua"
-pattern = '''(?<indent>[\t ]*)local cards_destroyed = \{\}\n(.*\n)*?\s+for j=1, #G\.jokers\.cards do\n\s+eval_card\(G\.jokers\.cards\[j\], \{cardarea = G\.jokers, remove_playing_cards = true, removed = cards_destroyed\}\)\n\s+end'''
+pattern = '''(?<indent>[\t ]*)local cards_destroyed = \{\}\r\n(.*\r\n)*?\s+for j=1, #G\.jokers\.cards do\r\n\s+eval_card\(G\.jokers\.cards\[j\], \{cardarea = G\.jokers, remove_playing_cards = true, removed = cards_destroyed\}\)\r\n\s+end'''
 line_prepend = '$indent'
 position = "at"
 payload = '''
@@ -741,7 +741,7 @@ end
 target = 'card.lua'
 line_prepend = '$indent'
 position = 'at'
-pattern = '(?<indent>[\t ]*)for i = 1, #G.jokers.cards do[\n\s]*G.jokers.cards\[i\]:calculate_joker\(\{remove_playing_cards = true, removed = destroyed_cards\}\)[\s\n]*end'
+pattern = '(?<indent>[\t ]*)for i = 1, #G.jokers.cards do[\r\n\s]*G.jokers.cards\[i\]:calculate_joker\(\{remove_playing_cards = true, removed = destroyed_cards\}\)[\s\r\n]*end'
 payload = '''SMODS.calculate_context({ remove_playing_cards = true, removed = destroyed_cards })'''
 
 # context.remove_playing_cards from discard
@@ -861,7 +861,7 @@ for _, target in ipairs(SMODS.get_card_areas('individual', 'calc_dollar_bonus'))
         local ret, ret_opts = target.object:calc_dollar_bonus()
         ret_opts = ret_opts or {}
         local name
-        
+
         -- TARGET: calc_dollar_bonus per individual object
         if ret then
             if not ret_opts.no_eval_row then
@@ -899,7 +899,7 @@ payload = '''
 SMODS.calculate_context{round_eval = true}
 '''
 
-# Add better `add_round_eval_row` support   
+# Add better `add_round_eval_row` support
 [[patches]]
 [patches.pattern]
 target = 'functions/common_events.lua'
@@ -968,7 +968,7 @@ if SMODS.saved then game_over = false end
 [patches.regex]
 target = 'functions/state_events.lua'
 position = 'at'
-pattern = '''(?<indent>[\t ]*)for i=1, #G\.hand\.cards do\n\s+--Check for hand doubling\n(.*\n)*?\s+delay\(0\.3\)'''
+pattern = '''(?<indent>[\t ]*)for i=1, #G\.hand\.cards do\r\n\s+--Check for hand doubling\r\n(.*\r\n)*?\s+delay\(0\.3\)'''
 line_prepend = '$indent'
 payload = '''for _,v in ipairs(SMODS.get_card_areas('playing_cards', 'end_of_round')) do
     SMODS.calculate_end_of_round_effects({ cardarea = v, end_of_round = true, beat_boss = G.GAME.blind.boss })
@@ -1169,7 +1169,7 @@ end
 payload = '''
 G.E_MANAGER:add_event(Event({
     trigger = 'immediate',
-    func = function()                
+    func = function()
         SMODS.cards_to_draw = SMODS.cards_to_draw - hand_space
         return true
     end
@@ -1201,7 +1201,7 @@ if cards_to_draw[i] and cards_to_draw[i].ability and (cards_to_draw[i].ability.e
     SMODS.cards_to_draw = SMODS.cards_to_draw + (cards_to_draw[i].ability.extra_slots_used or 0) - (cards_to_draw[i].ability.card_limit or 0)
     G.E_MANAGER:add_event(Event({
         trigger = 'immediate',
-        func = function()                
+        func = function()
             SMODS.cards_to_draw = SMODS.cards_to_draw - (cards_to_draw[i].ability.extra_slots_used or 0) + (cards_to_draw[i].ability.card_limit or 0)
             return true
         end
@@ -1838,7 +1838,7 @@ target = 'functions/state_events.lua'
 match_indent = false
 position = 'after'
 pattern = '''delay = G.GAME.current_round.current_hand.handname ~= disp_text and 0.4 or 0}, {handname=disp_text, level=G.GAME.hands[text].level, mult = G.GAME.hands[text].mult, chips = G.GAME.hands[text].chips})'''
-payload = '''    
+payload = '''
 for name, parameter in pairs(SMODS.Scoring_Parameters) do
     if name ~= 'chips' and name ~= 'mult' then update_hand_text({immediate = true}, {[name] = parameter.current}) end
 end
@@ -1882,10 +1882,10 @@ G.E_MANAGER:add_event(Event({
                     G.jokers:remove_card(self)
                     self:remove()
                     self = nil
-                return true; end})) 
+                return true; end}))
         return true
     end
-})) 
+}))
 '''
 payload = '''
 SMODS.destroy_cards(self, nil, nil, true)
@@ -1930,7 +1930,7 @@ target = 'card.lua'
 match_indent = true
 position = 'at'
 pattern = '''
-if my_pos and G.jokers.cards[my_pos+1] and not self.getting_sliced and not G.jokers.cards[my_pos+1].ability.eternal and not G.jokers.cards[my_pos+1].getting_sliced then 
+if my_pos and G.jokers.cards[my_pos+1] and not self.getting_sliced and not G.jokers.cards[my_pos+1].ability.eternal and not G.jokers.cards[my_pos+1].getting_sliced then
 '''
 payload = '''
 if my_pos and G.jokers.cards[my_pos+1] and not self.getting_sliced and not SMODS.is_eternal(G.jokers.cards[my_pos+1], self) and not G.jokers.cards[my_pos+1].getting_sliced then
@@ -2068,7 +2068,7 @@ if other_joker and other_joker ~= self then
     context.blueprint_card = context.blueprint_card or self
     if context.blueprint > #G.jokers.cards + 1 then return end
     local other_joker_ret = other_joker:calculate_joker(context)
-    if other_joker_ret then 
+    if other_joker_ret then
         other_joker_ret.card = context.blueprint_card or self
         other_joker_ret.colour = G.C.BLUE
         return other_joker_ret
@@ -2095,7 +2095,7 @@ if other_joker and other_joker ~= self then
     context.blueprint_card = context.blueprint_card or self
     if context.blueprint > #G.jokers.cards + 1 then return end
     local other_joker_ret = other_joker:calculate_joker(context)
-    if other_joker_ret then 
+    if other_joker_ret then
         other_joker_ret.card = context.blueprint_card or self
         other_joker_ret.colour = G.C.RED
         return other_joker_ret

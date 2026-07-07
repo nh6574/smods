@@ -6,7 +6,7 @@ priority = -10
 [[patches]]
 [patches.regex]
 target = "functions/misc_functions.lua"
-pattern = "local final_line = \\{\\}(\n.*)*\\s*if args\\.type == 'name' or args\\.type == 'text' then return final_line end\n\\s*args\\.nodes\\[#args\\.nodes\\+1\\] = final_line\n(?<indent>[\t ]*)end"
+pattern = "local final_line = \\{\\}(\r\n.*)*\\s*if args\\.type == 'name' or args\\.type == 'text' then return final_line end\r\n\\s*args\\.nodes\\[#args\\.nodes\\+1\\] = final_line\r\n(?<indent>[\t ]*)end"
 position = "at"
 payload = """local final_line = SMODS.localize_box(lines, args)
     if args.type == 'text' then return final_line end
@@ -243,7 +243,7 @@ pattern = '''
 --Draw the 'chosen triangle'
 '''
 payload = '''
-if self.config.underline and self.config.underline[4] > 0.01 then 
+if self.config.underline and self.config.underline[4] > 0.01 then
     prep_draw(self, 1)
     love.graphics.scale(1/(G.TILESIZE))
     love.graphics.setLineWidth(1)
@@ -263,7 +263,7 @@ pattern = '''
 --Draw the 'chosen triangle'
 '''
 payload = '''
-if self.config.strikethrough and self.config.strikethrough[4] > 0.01 then 
+if self.config.strikethrough and self.config.strikethrough[4] > 0.01 then
     prep_draw(self, 1)
     love.graphics.scale(1/(G.TILESIZE))
     love.graphics.setLineWidth(1)
