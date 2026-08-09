@@ -1,36 +1,25 @@
 ---@meta
 
 ---@class Object: table
----@overload fun(...?: any): Object|table
+
+---@overload fun(...?: any): Object
 Object = {}
 Object.__index = Object
 
----@param self Object
+--- Creates a new instance of the class.
 ---@param ...? any
-function Object:__call(...)
-	local obj = setmetatable({}, self)
-	obj:init(...)
-	return obj
-end
+---@return Object
+function Object:__call(...) end
 
 ---@param T metatable
----@return boolean 
---- Checks if the Object is a specific metatable type. 
+---@return boolean
+--- Checks if the Object is a specific metatable type (i.e. belongs to the class or one that extends it).
 function Object:is(T) end
 
----@param self Object
----@return table
---- Extends the object's class. 
-function Object:extend()
-	local cls = {}
-	cls.__call = Object.__call
-	cls.__index = cls
-	cls.super = self
-	setmetatable(cls, self)
-	return cls
-end
+---@return Object
+--- Extends the object's class.
+function Object:extend() end
 
----@param self Object
 ---@param ...? any
---- Initialized the object. 
+--- Initializes the object.
 function Object:init(...) end

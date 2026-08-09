@@ -36,15 +36,15 @@ G.F_ENABLE_PERF_OVERLAY = false
 --- Disables all 'run' saving
 G.F_NO_SAVING = false
 
----@type boolean 
+---@type boolean
 --- Force mute all sounds
 G.F_MUTE = false
 
----@type boolean 
+---@type boolean
 --- Have sound in a separate thread entirely - if not sounds will run on main thread
 G.F_SOUND_THREAD = true
 
----@type boolean 
+---@type boolean
 --- Let the player change their video settings
 G.F_VIDEO_SETTINGS = true
 
@@ -52,7 +52,7 @@ G.F_VIDEO_SETTINGS = true
 --- Call to Action video for the Demo - keep this as false
 G.F_CTA = false
 
----@type boolean 
+---@type boolean
 --- Extra debug information on screen and in the console
 G.F_VERBOSE = true
 
@@ -100,11 +100,11 @@ G.F_ENGLISH_ONLY = false
 --- Replaces back/select with a "guide" button
 G.F_GUIDE = false
 
----@type boolean 
+---@type boolean
 --- Call to action for Jan demo
 G.F_JAN_CTA = false
 
----@type boolean 
+---@type boolean
 --- Hide the game objects when paused
 G.F_HIDE_BG = false
 
@@ -124,7 +124,7 @@ G.F_LOCAL_CLIPBOARD = false
 --- Timer between saves
 G.F_SAVE_TIMER = 30
 
----@type boolean 
+---@type boolean
 --- Enables mobile UI
 G.F_MOBILE_UI = false
 
@@ -158,15 +158,15 @@ G.DRAW_HASH_BUFF = 2
 
 ---@type number
 --- Default card width
-G.CARD_W = 2.4*35/41
+G.CARD_W = 2.4 * 35 / 41
 
----@type number 
+---@type number
 --- Default card height
-G.CARD_H = 2.4*47/41
+G.CARD_H = 2.4 * 47 / 41
 
 ---@type number
 --- Highlight height
-G.HIGHLIGHT_H = 0.2*G.CARD_H
+G.HIGHLIGHT_H = 0.2 * G.CARD_H
 
 ---@type number
 --- Collision buffer
@@ -175,6 +175,13 @@ G.COLLISION_BUFFER = 0.05
 ---@type number
 --- Pitch modifier
 G.PITCH_MOD = 1
+
+--- @alias Game.TimerType
+--- | 'TOTAL' Affected by game speed, may reset between game stages
+--- | 'REAL' Real time, may reset between game stages
+--- | 'REAL_SHADER' Like 'REAL' but may be a fixed value if the reduced motion setting is enabled
+--- | 'UPTIME' Real time since boot, doesn't reset
+--- | 'BACKGROUND' Unused
 
 ---@type table
 --- Table of timers
@@ -197,7 +204,7 @@ G.SETTINGS = {}
 G.COLLABS = {}
 
 ---@type table
---- Unused in vanilla. Table of metrics, saved as 
+--- Unused in vanilla. Table of metrics, saved as
 G.METRICS = {}
 
 ---@type table[]
@@ -217,7 +224,7 @@ G.STAGES = {}
 G.C = {}
 
 ---@type Color[]
---- Colors used for easing the background elements. 
+--- Colors used for easing the background elements.
 G.C.DYN_UI = {}
 
 ---@type Color[]
@@ -237,7 +244,7 @@ G.C.SUITS = {}
 G.C.UI = {}
 
 ---@type Color[]
---- Main Card set colors. 
+--- Main Card set colors.
 G.C.SET = {}
 
 ---@type Color[]
@@ -324,7 +331,7 @@ function Game:save_metrics() end
 function Game:prep_stage(new_stage, new_state, new_game_obj) end
 
 ---@param self Game
---- Sets the game into a sandbox. 
+--- Sets the game into a sandbox.
 function Game:sandbox() end
 
 ---@param self Game
@@ -350,12 +357,12 @@ function Game:init_game_object() end
 function Game:start_run(args) end
 
 ---@param self Game
----@param dt number 
+---@param dt number
 --- Updates the game. Called each frame.
 function Game:update(dt) end
 
 ---@param self Game
---- Handler for drawing objects. 
+--- Handler for drawing objects.
 function Game:draw() end
 
 ---@param self Game
@@ -419,7 +426,7 @@ function Game:update_spectral_pack(dt) end
 
 ---@param self Game
 ---@param dt number
---- Updates `STANDARD_PACK` states. 
+--- Updates `STANDARD_PACK` states.
 function Game:update_standard_pack(dt) end
 
 ---@param self Game

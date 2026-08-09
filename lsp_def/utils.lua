@@ -158,7 +158,7 @@ function SMODS.merge_lists(...) end
 ---@field quantum_enhancements? boolean Enables "Quantum Enhancement" contexts. Cards can count as having multiple enhancements at once.
 ---@field retrigger_joker? boolean Enables "Joker Retrigger" contexts. Jokers can be retriggered by other jokers or effects.
 ---@field post_trigger? boolean Enables "Post Trigger" contexts. Allows calculating effects after a Joker has been calculated.
----@field object_weights? boolean Enables individual weights for object polling. 
+---@field object_weights? boolean Enables individual weights for object polling.
 ---@field cardareas? SMODS.optional_features.cardareas Enables additional CardArea calculation.
 
 ---@class SMODS.optional_features.cardareas: table
@@ -709,7 +709,7 @@ function SMODS.get_multi_boxes(multi_box) end
 -- Checks and returns whether a card is a playing card.
 function SMODS.is_playing_card(card) end
 
----@param card Card 
+---@param card Card
 ---@return boolean success
 -- Pinches and :removes() a card. (context.joker_type_destroyed is calculated, and may prevent destruction)
 function SMODS.pinch_and_remove(card) end
@@ -920,7 +920,7 @@ function SMODS.mod_score(mod_score) end
 ---@field mult? number Multiply score by this number
 ---@field card? Card Card responsible for score modification action, crucial for score display to work properly
 ---@field effect? table Table of effects that were calculated
----@field from_edition? boolean 
+---@field from_edition? boolean
 
 ---Modifies current blind size
 ---@param mod_blind_size Blind_Size_Mod_Parameter Blindcore modification parameter
@@ -966,3 +966,6 @@ function SMODS.card_to_image(card, scale, filename) end
 ---@param bypass_debuff boolean? Whether to ignore the card's debuff status
 ---@return boolean
 function Card.is_suit_shade(card, shade, bypass_debuff) end
+
+---@type table<Event.EaseType, function>
+SMODS.ease_types = {}
