@@ -17,11 +17,23 @@ G.FUNCS.HUD_blind_debuff = function(e)
 		local excess_height = (0.3 + padding)*(num_lines - 5)
 		padding = padding - excess_height / (num_lines + 1)
 	end
-	e.config.padding = padding
+    e.config.padding = padding
+    if G.GAME.blind.update_loc_debuff_lines then
+		for i = 1, #e.children do
+			e.children[i]:remove()
+			e.children[i] = nil
+		end
+		G.GAME.blind.update_loc_debuff_lines = nil
+	end
 	if num_lines > #e.children then
-		for i = #e.children+1, num_lines do
-			local node_def = {n = G.UIT.R, config = {align = "cm", minh = 0.3, maxw = 4.2}, nodes = {
+        for i = #e.children + 1, num_lines do
+			local node_def 
+			if type(G.GAME.blind.loc_debuff_lines[i]) == "string" then
+				node_def = {n = G.UIT.R, config = {align = "cm", minh = 0.3, maxw = 4.2}, nodes = {
 				{n = G.UIT.T, config = {ref_table = G.GAME.blind.loc_debuff_lines, ref_value = i, scale = scale * 0.9, colour = G.C.UI.TEXT_LIGHT}}}}
+			else
+				node_def = {n = G.UIT.R, config = {align = "cm", minh = 0.3, maxw = 4.2}, nodes = SMODS.localize_box(G.GAME.blind.loc_debuff_lines[i], {default_col = G.GAME.blind.loc_debuff_lines.text_colour or G.C.UI.TEXT_LIGHT, scale = 1.125 * (G.GAME.blind.loc_debuff_lines.scale or 1), vars = G.GAME.blind.loc_debuff_lines.vars or {}})}
+			end
 			e.UIBox:set_parent_child(node_def, e)
 		end
 	elseif num_lines < #e.children then
@@ -51,8 +63,8 @@ function create_UIBox_your_collection_blinds(exit)
 		if i > 1 then
 			ante_amounts[#ante_amounts + 1] = { n = G.UIT.R, config = { minh = spacing }, nodes = {} }
 		end
-		local blind_chip = Sprite(0, 0, 0.2, 0.2, G.ASSET_ATLAS["ui_" .. (G.SETTINGS.colourblind_option and 2 or 1)],
-			{ x = 0, y = 0 })
+		local atlas_key = "ui_" .. (G.SETTINGS.colourblind_option and 2 or 1)
+		local blind_chip = SMODS.create_sprite(0, 0, 0.2, 0.2, atlas_key, { x = 0, y = 0 })
 		blind_chip.states.drag.can = false
 		ante_amounts[#ante_amounts + 1] = {
 			n = G.UIT.R,
@@ -119,8 +131,8 @@ function create_UIBox_your_collection_blinds(exit)
 	local blinds_to_be_alerted = {}
 	local row, col = 1, 1
 	for k, v in ipairs(blind_tab) do
-		local temp_blind = AnimatedSprite(G.your_collection[row].T.x + G.your_collection[row].T.w/2, G.your_collection[row].T.y, 1.3, 1.3, G.ANIMATION_ATLAS[v.discovered and v.atlas or 'blind_chips'],
-			v.discovered and v.pos or G.b_undiscovered.pos)
+		local atlas_key = v.discovered and v.atlas or 'blind_chips'
+		local temp_blind = SMODS.create_sprite(G.your_collection[row].T.x + G.your_collection[row].T.w/2, G.your_collection[row].T.y, 1.3, 1.3, atlas_key, v.discovered and v.pos or G.b_undiscovered.pos, v.sprite_args)
 		temp_blind.states.click.can = false
 		temp_blind.states.drag.can = false
 		temp_blind.states.hover.can = true
@@ -309,8 +321,8 @@ function G.FUNCS.your_collection_blinds_page(args)
 	local blinds_to_be_alerted = {}
 	local row, col = 1, 1
 	for k, v in ipairs(blind_tab) do
-		local temp_blind = AnimatedSprite(G.your_collection[row].T.x + G.your_collection[row].T.w/2, G.your_collection[row].T.y, 1.3, 1.3, G.ANIMATION_ATLAS[v.discovered and v.atlas or 'blind_chips'],
-			v.discovered and v.pos or G.b_undiscovered.pos)
+		local atlas_key = v.discovered and v.atlas or 'blind_chips'
+		local temp_blind = SMODS.create_sprite(G.your_collection[row].T.x + G.your_collection[row].T.w/2, G.your_collection[row].T.y, 1.3, 1.3, atlas_key, v.discovered and v.pos or G.b_undiscovered.pos, v.sprite_args)
 		temp_blind.states.click.can = false
 		temp_blind.states.drag.can = false
 		temp_blind.states.hover.can = true
@@ -511,13 +523,20 @@ function SMODS.applied_stakes_UI(i, stake_desc_rows, num_added)
 	if num_added == nil then num_added = { val = 0 } end
 	if G.P_CENTER_POOLS['Stake'][i].applied_stakes then
 		for _, v in pairs(G.P_CENTER_POOLS['Stake'][i].applied_stakes) do
-			if v ~= "white" then
+			if not G.P_STAKES[v].hide_from_run_info and v ~= "white" and v ~= "stake_white" then
 				--todo: manage this with pages
 				if num_added.val < 8 then
-					local i = G.P_STAKES[v].stake_level
+					local i = G.P_STAKES[v].order
 					local _stake_desc = {}
 					local _stake_center = G.P_CENTER_POOLS.Stake[i]
-					localize { type = 'descriptions', key = _stake_center.key, set = _stake_center.set, nodes = _stake_desc }
+					local t, res = {}, {}
+					if _stake_center.loc_vars and type(_stake_center.loc_vars) == 'function' then
+						res = _stake_center:loc_vars({}) or {}
+					end
+					t.vars = res.vars or {}
+					t.key = res.key or _stake_center.key
+					t.set = res.set or _stake_center.set
+					localize { type = 'descriptions', key = t.key, set = t.set, nodes = _stake_desc, vars = t.vars }
 					local _full_desc = {}
 					for k, v in ipairs(_stake_desc) do
 						_full_desc[#_full_desc + 1] = {n = G.UIT.R, config = {align = "cm"}, nodes = v}
@@ -531,7 +550,7 @@ function SMODS.applied_stakes_UI(i, stake_desc_rows, num_added)
 							_full_desc},}}
 				end
 				num_added.val = num_added.val + 1
-				num_added.val = SMODS.applied_stakes_UI(G.P_STAKES[v].stake_level, stake_desc_rows,
+				SMODS.applied_stakes_UI(G.P_STAKES[v].order, stake_desc_rows,
 					num_added)
 			end
 		end
@@ -542,16 +561,61 @@ end
 function G.UIDEF.deck_stake_column(_deck_key)
 	local deck_usage = G.PROFILES[G.SETTINGS.profile].deck_usage[_deck_key]
 	local stake_col = {}
-	local valid_option = nil
 	local num_stakes = #G.P_CENTER_POOLS['Stake']
 	for i = #G.P_CENTER_POOLS['Stake'], 1, -1 do
-		local _wins = deck_usage and deck_usage.wins[i] or 0
-		if (deck_usage and deck_usage.wins[i - 1]) or i == 1 or G.PROFILES[G.SETTINGS.profile].all_unlocked then valid_option = true end
+		local _wins = deck_usage and deck_usage.wins_by_key[SMODS.stake_from_index(i)] or 0
+		local valid_option = nil
+		if (SMODS.stake_is_unlocked(SMODS.stake_from_index(i), _deck_key)) or (not next(G.P_CENTER_POOLS.Stake[i].applied_stakes or {})) or G.PROFILES[G.SETTINGS.profile].all_unlocked then valid_option = true end
 		stake_col[#stake_col + 1] = {n = G.UIT.R, config = {id = i, align = "cm", colour = _wins > 0 and G.C.GREY or G.C.CLEAR, outline = 0, outline_colour = G.C.WHITE, r = 0.1, minh = 2 / num_stakes, minw = valid_option and 0.45 or 0.25, func = 'RUN_SETUP_check_back_stake_highlight'}, nodes = {
 			{n = G.UIT.R, config = {align = "cm", minh = valid_option and 1.36 / num_stakes or 1.04 / num_stakes, minw = valid_option and 0.37 or 0.13, colour = _wins > 0 and get_stake_col(i) or G.C.UI.TRANSPARENT_LIGHT, r = 0.1}, nodes = {}}}}
 		if i > 1 then stake_col[#stake_col + 1] = {n = G.UIT.R, config = {align = "cm", minh = 0.8 / num_stakes, minw = 0.04 }, nodes = {} } end
 	end
 	return {n = G.UIT.ROOT, config = {align = 'cm', colour = G.C.CLEAR}, nodes = stake_col}
+end
+
+function SMODS.check_applied_stakes(stake, deck)
+    local applied = stake and stake.applied_stakes
+    if type(applied) == "table" and next(applied) ~= nil then
+        for _, applied_stake in ipairs(applied) do
+            if not (deck and deck.wins_by_key and deck.wins_by_key[applied_stake]) then
+                return false
+            end
+        end
+    end
+    return true
+end
+
+
+function G.UIDEF.stake_option(_type)
+
+	local middle = {n=G.UIT.R, config={align = "cm", minh = 1.7, minw = 7.3}, nodes={
+		{n=G.UIT.O, config={id = nil, func = 'RUN_SETUP_check_stake2', object = Moveable()}},
+	}}
+
+	local stake_options = {}
+	local curr_options = {}
+	local deck_usage = G.PROFILES[G.SETTINGS.profile].deck_usage[G.GAME.viewed_back.effect.center.key]
+	local deck_key = G.GAME.viewed_back.effect.center.key
+	local last_viewed_stake = SMODS.stake_from_index(G.viewed_stake)
+	local next_stake_index = G.P_STAKES[SMODS.next_stake(SMODS.stake_from_index(get_deck_win_stake(deck_key)), deck_key)].order
+	G.viewed_stake = ((SMODS.stake_is_unlocked(last_viewed_stake, deck_key) or G.PROFILES[G.SETTINGS.profile].all_unlocked) and G.viewed_stake or next_stake_index) or 1
+	for i=1, #G.P_CENTER_POOLS.Stake do
+		if G.PROFILES[G.SETTINGS.profile].all_unlocked or SMODS.check_applied_stakes(G.P_CENTER_POOLS.Stake[i], deck_usage or {wins_by_key = {}}) then
+			stake_options[#stake_options + 1] = i
+			curr_options[i] = #stake_options
+		end
+	end
+
+	return {n=G.UIT.ROOT, config={align = "tm", colour = G.C.CLEAR, minh = 2.03, minw = 8.3}, nodes={
+		_type == 'Continue' and middle
+		or create_option_cycle({options = stake_options, opt_callback = 'change_stake', current_option = curr_options[G.viewed_stake] or 1,
+			colour = G.C.RED, w = 6, mid = middle})
+	}}
+end
+
+G.FUNCS.change_stake = function(args)
+	G.viewed_stake = args.to_val or args.to_key
+	G.PROFILES[G.SETTINGS.profile].MEMORY.stake = args.to_val or args.to_key
 end
 
 --#endregion
@@ -669,7 +733,7 @@ function G.UIDEF.deck_preview(args)
 				if v.base.suit == kk and not v_ns then suit_counts[kk] = suit_counts[kk] + 1 end
 				if v:is_suit(kk) then mod_suit_counts[kk] = mod_suit_counts[kk] + 1 end
 			end
-			if SUITS[v.base.suit][v.base.value] and not v_nr and not v_ns then
+			if (SUITS[v.base.suit] or {})[v.base.value] and not v_nr and not v_ns then
 				table.insert(SUITS[v.base.suit][v.base.value], v)
 			end
 			if not v_nr then
@@ -731,7 +795,7 @@ function G.UIDEF.deck_preview(args)
 				local _colour = #SUITS[suit][rank] > 0 and flip_col or G.C.UI.TRANSPARENT_LIGHT
 
 				local _col = {n = G.UIT.C, config = {align = "cm", padding = 0.05, minw = _minw + 0.098, minh = _minh }, nodes = {
-					{n = G.UIT.T, config = {text = '' .. #SUITS[suit][rank], colour = _colour, scale = _tscale, shadow = true, lang = G.LANGUAGES['en-us'] } },}}
+					{n = G.UIT.T, config = {text = '' .. #((SUITS[suit] or {})[rank] or {}), colour = _colour, scale = _tscale, shadow = true, lang = G.LANGUAGES['en-us'] } },}}
 				if not hidden_ranks[rank] then table.insert(_row, _col) end
 			end
 			table.insert(deck_tables,
@@ -742,19 +806,21 @@ function G.UIDEF.deck_preview(args)
 
 	for k, v in ipairs(suit_map) do
 		if not hidden_suits[v] then
-			local deckskin = SMODS.DeckSkins[G.SETTINGS.CUSTOM_DECK.Collabs[v]]
-			local palette = deckskin.palette_map and deckskin.palette_map[G.SETTINGS.colour_palettes[v] or ''] or (deckskin.palettes or {})[1]
+			local deckskin = SMODS.DeckSkins[G.SETTINGS.CUSTOM_DECK.Collabs[v]] or {}
+			local palette = (deckskin.palette_map or {})[G.SETTINGS.colour_palettes[v] or ""] or (deckskin.palettes or {})[1]
 			local t_s
 			if palette and palette.suit_icon and palette.suit_icon.atlas then
 				local _x = (v == 'Spades' and 3) or (v == 'Hearts' and 0) or (v == 'Clubs' and 2) or (v == 'Diamonds' and 1)
-				t_s = Sprite(0,0,0.3,0.3,G.ASSET_ATLAS[palette.suit_icon.atlas or 'ui_1'], (type(palette.suit_icon.pos) == "number" and {x=_x, y=palette.suit_icon.pos}) or palette.suit_icon.pos or {x=_x, y=0})
+				local atlas_key = palette.suit_icon.atlas or 'ui_1'
+				t_s = SMODS.create_sprite(0, 0, 0.3, 0.3, atlas_key, (type(palette.suit_icon.pos) == "number" and {x=_x, y=palette.suit_icon.pos}) or palette.suit_icon.pos or {x=_x, y=0})
 			elseif G.SETTINGS.colour_palettes[v] == 'lc' or G.SETTINGS.colour_palettes[v] == 'hc' then
-				t_s = Sprite(0, 0, 0.3, 0.3,
-						G.ASSET_ATLAS[SMODS.Suits[v][G.SETTINGS.colour_palettes[v] == 'hc' and "hc_ui_atlas" or G.SETTINGS.colour_palettes[v] == 'lc' and "lc_ui_atlas"]] or
-						G.ASSET_ATLAS[("ui_" .. (G.SETTINGS.colourblind_option and "2" or "1"))], SMODS.Suits[v].ui_pos)
+				local atlas_key_1 = SMODS.Suits[v][G.SETTINGS.colour_palettes[v] == 'hc' and "hc_ui_atlas" or G.SETTINGS.colour_palettes[v] == 'lc' and "lc_ui_atlas"]
+				local atlas_key_2 = ("ui_" .. (G.SETTINGS.colourblind_option and "2" or "1"))
+				local atlas = SMODS.get_atlas(atlas_key_1) or SMODS.get_atlas(atlas_key_2)
+				t_s = SMODS.create_sprite(0, 0, 0.3, 0.3, atlas, SMODS.Suits[v].ui_pos)
 			else
-				local atlas = G.SETTINGS.colour_palettes[v] == "hc" and SMODS.Suits[v].hc_ui_atlas or SMODS.Suits[v].lc_ui_atlas
-				t_s = Sprite(0, 0, 0.3, 0.3, G.ASSET_ATLAS[atlas and atlas or ("ui_" .. (G.SETTINGS.colourblind_option and "2" or "1"))], SMODS.Suits[v].ui_pos)
+				local atlas_key = G.SETTINGS.colour_palettes[v] == "hc" and SMODS.Suits[v].hc_ui_atlas or SMODS.Suits[v].lc_ui_atlas or ("ui_" .. (G.SETTINGS.colourblind_option and "2" or "1"))
+				t_s = SMODS.create_sprite(0, 0, 0.3, 0.3, atlas_key, SMODS.Suits[v].ui_pos)
 			end
 
 			t_s.states.drag.can = false
@@ -807,13 +873,18 @@ function tally_sprite(pos, value, tooltip, suit)
 	local t_s
 	if palette and palette.suit_icon and palette.suit_icon.atlas then
 		local _x = (suit == 'Spades' and 3) or (suit == 'Hearts' and 0) or (suit == 'Clubs' and 2) or (suit == 'Diamonds' and 1)
-		t_s = Sprite(0,0,0.3,0.3,G.ASSET_ATLAS[palette.suit_icon.atlas or 'ui_1'], (type(palette.suit_icon.pos) == "number" and {x=_x, y=palette.suit_icon.pos}) or palette.suit_icon.pos or {x=_x, y=0})
+		local atlas_key = palette.suit_icon.atlas or 'ui_1'
+		t_s = SMODS.create_sprite(0, 0, 0.3, 0.3, atlas_key, (type(palette.suit_icon.pos) == "number" and {x=_x, y=palette.suit_icon.pos}) or palette.suit_icon.pos or {x=_x, y=0})
 	elseif suit and (G.SETTINGS.colour_palettes[suit] == 'lc' or G.SETTINGS.colour_palettes[suit] == 'hc') then
-		t_s = Sprite(0, 0, 0.3, 0.3,
-				G.ASSET_ATLAS[SMODS.Suits[suit][G.SETTINGS.colour_palettes[suit] == 'hc' and "hc_ui_atlas" or G.SETTINGS.colour_palettes[suit] == 'lc' and "lc_ui_atlas"]] or
-				G.ASSET_ATLAS[("ui_" .. (G.SETTINGS.colourblind_option and "2" or "1"))], SMODS.Suits[suit].ui_pos)
+		local atlas_key_1 = SMODS.Suits[suit][G.SETTINGS.colour_palettes[suit] == 'hc' and "hc_ui_atlas" or G.SETTINGS.colour_palettes[suit] == 'lc' and "lc_ui_atlas"]
+		local atlas_key_2 = ("ui_" .. (G.SETTINGS.colourblind_option and "2" or "1"))
+		local atlas = SMODS.get_atlas(atlas_key_1) or SMODS.get_atlas(atlas_key_2)
+		t_s = SMODS.create_sprite(0, 0, 0.3, 0.3, atlas, SMODS.Suits[suit].ui_pos)
 	else
-		t_s = Sprite(0,0,0.5,0.5, suit and G.ASSET_ATLAS[SMODS.Suits[suit][G.SETTINGS.colourblind_option and "hc_ui_atlas" or "lc_ui_atlas"]] or G.ASSET_ATLAS[("ui_"..(G.SETTINGS.colourblind_option and "2" or "1"))], {x=pos.x or 0, y=pos.y or 0})
+		local atlas_key_1 = suit and SMODS.Suits[suit][G.SETTINGS.colourblind_option and "hc_ui_atlas" or "lc_ui_atlas"]
+		local atlas_key_2 = ("ui_"..(G.SETTINGS.colourblind_option and "2" or "1"))
+		local atlas = SMODS.get_atlas(atlas_key_1) or SMODS.get_atlas(atlas_key_2)
+		t_s = SMODS.create_sprite(0, 0, 0.5, 0.5, atlas, {x=pos.x or 0, y=pos.y or 0})
 	end
 	t_s.states.drag.can = false
 	t_s.states.hover.can = false
@@ -872,7 +943,8 @@ function G.UIDEF.view_deck(unplayed_only)
 						highlight_limit = 0,
 						card_w = G
 							.CARD_W * 0.7,
-						draw_layers = { 'card' }
+						draw_layers = { 'card' },
+						negative_info = 'playing_card'
 					})
 				table.insert(deck_tables,
 					{n = G.UIT.R, config = {align = "cm", padding = 0}, nodes = {
@@ -902,7 +974,7 @@ function G.UIDEF.view_deck(unplayed_only)
 			G.ROOM.T.x + 0.2*G.ROOM.T.w/2,G.ROOM.T.h,
 			6.5*G.CARD_W,
 			0.6*G.CARD_H,
-			{card_limit = 1, type = 'title', view_deck = true, highlight_limit = 0, card_w = G.CARD_W*0.7, draw_layers = {'card'}})
+			{card_limit = 1, type = 'title', view_deck = true, highlight_limit = 0, card_w = G.CARD_W*0.7, draw_layers = {'card'}, negative_info = 'playing_card'})
 		table.insert(
 			deck_tables,
 			{n=G.UIT.R, config={align = "cm", padding = 0}, nodes={
@@ -970,11 +1042,13 @@ function G.UIDEF.view_deck(unplayed_only)
 
 	if wheel_flipped > 0 then flip_col = mix_colours(G.C.FILTER, G.C.WHITE, 0.7) end
 
-	local rank_cols = {}
-	for i = #rank_name_mapping, 1, -1 do
-		if rank_tallies[rank_name_mapping[i]] ~= 0 or SMODS.add_to_pool(SMODS.Ranks[rank_name_mapping[i]], {suit=''}) then
+    local rank_cols = {}
+    local temp_cols = {}
+
+    for i = #rank_name_mapping, 1, -1 do
+        if rank_tallies[rank_name_mapping[i]] ~= 0 or SMODS.add_to_pool(SMODS.Ranks[rank_name_mapping[i]], { suit = '' }) then
 			local mod_delta = mod_rank_tallies[rank_name_mapping[i]] ~= rank_tallies[rank_name_mapping[i]]
-			rank_cols[#rank_cols + 1] = {n = G.UIT.R, config = {align = "cm", padding = 0.07}, nodes = {
+            temp_cols[#temp_cols + 1] = {n = G.UIT.R, config = {align = "cm", padding = 0.07}, nodes = {
 				{n = G.UIT.C, config = {align = "cm", r = 0.1, padding = 0.04, emboss = 0.04, minw = 0.5, colour = G.C.L_BLACK}, nodes = {
 					{n = G.UIT.T, config = {text = SMODS.Ranks[rank_name_mapping[i]].shorthand, colour = G.C.JOKER_GREY, scale = 0.35, shadow = true}},}},
 				{n = G.UIT.C, config = {align = "cr", minw = 0.4}, nodes = {
@@ -984,8 +1058,25 @@ function G.UIDEF.view_deck(unplayed_only)
 								colours = { G.C.RED }, scale = 0.4, y_offset = -2, silent = true, shadow = true, pop_in_rate = 10, pop_delay = 4
 							})}}
 					or {n = G.UIT.T, config = {text = rank_tallies[rank_name_mapping[i]], colour = flip_col, scale = 0.45, shadow = true } },}}}}
-		end
-	end
+
+            if #temp_cols >= 13 then
+                rank_cols[#rank_cols + 1] = {
+                    n = G.UIT.C,
+                    config = { align = "cm" },
+                    nodes = temp_cols
+                }
+                temp_cols = {}
+            end
+        end
+    end
+
+    if #temp_cols > 0 then
+        rank_cols[#rank_cols + 1] = {
+            n = G.UIT.C,
+            config = { align = "cm" },
+            nodes = temp_cols
+        }
+    end
 
 	local tally_ui = {
 		-- base cards
@@ -1143,7 +1234,7 @@ G.FUNCS.your_suits_page = function(args)
 	G.VIEWING_DECK = true
 	table.sort(G.playing_cards, function(a, b) return a:get_nominal('suit') > b:get_nominal('suit') end)
 	local SUITS = {}
-	local suit_map = {} 
+	local suit_map = {}
 	for i = #SMODS.Suit.obj_buffer, 1, -1 do
 		SUITS[SMODS.Suit.obj_buffer[i]] = {}
 		suit_map[#suit_map + 1] = SMODS.Suit.obj_buffer[i]
@@ -1178,7 +1269,8 @@ G.FUNCS.your_suits_page = function(args)
 					highlight_limit = 0,
 					card_w = G
 						.CARD_W * 0.7,
-					draw_layers = { 'card' }
+					draw_layers = { 'card' },
+					negative_info = 'playing_card'
 				})
 			table.insert(deck_tables,
 				{n = G.UIT.R, config = {align = "cm", padding = 0}, nodes = {
@@ -1207,7 +1299,7 @@ G.FUNCS.your_suits_page = function(args)
 			G.ROOM.T.x + 0.2*G.ROOM.T.w/2,G.ROOM.T.h,
 			6.5*G.CARD_W,
 			0.6*G.CARD_H,
-			{card_limit = 1, type = 'title', view_deck = true, highlight_limit = 0, card_w = G.CARD_W*0.7, draw_layers = {'card'}})
+			{card_limit = 1, type = 'title', view_deck = true, highlight_limit = 0, card_w = G.CARD_W*0.7, draw_layers = {'card'}, negative_info = 'playing_card'})
 		table.insert(
 			deck_tables,
 			{n=G.UIT.R, config={align = "cm", padding = 0}, nodes={
@@ -1274,11 +1366,13 @@ G.FUNCS.your_suits_page = function(args)
 
 	if wheel_flipped > 0 then flip_col = mix_colours(G.C.FILTER, G.C.WHITE, 0.7) end
 
-	local rank_cols = {}
-	for i = #rank_name_mapping, 1, -1 do
-		if rank_tallies[rank_name_mapping[i]] ~= 0 or SMODS.add_to_pool(SMODS.Ranks[rank_name_mapping[i]], {suit=''}) then
+    local rank_cols = {}
+    local temp_cols = {}
+
+    for i = #rank_name_mapping, 1, -1 do
+        if rank_tallies[rank_name_mapping[i]] ~= 0 or SMODS.add_to_pool(SMODS.Ranks[rank_name_mapping[i]], { suit = '' }) then
 			local mod_delta = mod_rank_tallies[rank_name_mapping[i]] ~= rank_tallies[rank_name_mapping[i]]
-			rank_cols[#rank_cols + 1] = {n = G.UIT.R, config = {align = "cm", padding = 0.07}, nodes = {
+            temp_cols[#temp_cols + 1] = {n = G.UIT.R, config = {align = "cm", padding = 0.07}, nodes = {
 				{n = G.UIT.C, config = {align = "cm", r = 0.1, padding = 0.04, emboss = 0.04, minw = 0.5, colour = G.C.L_BLACK}, nodes = {
 					{n = G.UIT.T, config = {text = SMODS.Ranks[rank_name_mapping[i]].shorthand, colour = G.C.JOKER_GREY, scale = 0.35, shadow = true}},}},
 				{n = G.UIT.C, config = {align = "cr", minw = 0.4}, nodes = {
@@ -1288,8 +1382,25 @@ G.FUNCS.your_suits_page = function(args)
 								colours = { G.C.RED }, scale = 0.4, y_offset = -2, silent = true, shadow = true, pop_in_rate = 10, pop_delay = 4
 							})}}
 					or {n = G.UIT.T, config = {text = rank_tallies[rank_name_mapping[i]], colour = flip_col, scale = 0.45, shadow = true } },}}}}
-		end
-	end
+
+            if #temp_cols >= 13 then
+                rank_cols[#rank_cols + 1] = {
+                    n = G.UIT.C,
+                    config = { align = "cm" },
+                    nodes = temp_cols
+                }
+                temp_cols = {}
+            end
+        end
+    end
+
+    if #temp_cols > 0 then
+        rank_cols[#rank_cols + 1] = {
+            n = G.UIT.C,
+            config = { align = "cm" },
+            nodes = temp_cols
+        }
+    end
 
 	local tally_ui = {
 		-- base cards
@@ -1452,7 +1563,7 @@ function Game:init_game_object()
             -- are fine.
             -- In fact, the check should just warn you if you have a key that
             -- can't be serialized.
-			if type(v) == 'number' or type(v) == 'boolean' or k == 'example' then
+			if type(v) == 'number' or type(v) == 'boolean' or k == 'example' or k == 'key' then
 				t.hands[key][k] = v
 			end
 		end
@@ -1496,24 +1607,37 @@ function G.FUNCS.get_poker_hand_info(_cards)
 	return text, loc_disp_text, poker_hands, scoring_hand, disp_text
 end
 
-function create_UIBox_current_hands(simple)
+function create_UIBox_current_hands(simple, in_collection)
 	G.current_hands = {}
-	local index = 0
-	for _, v in ipairs(G.handlist) do
-		local ui_element = create_UIBox_current_hand_row(v, simple)
-		G.current_hands[index + 1] = ui_element
-		if ui_element then
-			index = index + 1
-		end
-		if index >= 10 then
-			break
+
+	local _pool = in_collection and SMODS.collection_pool(SMODS.PokerHands) or nil
+	local handlist = in_collection and {} or nil
+	if _pool then
+		for _, v in ipairs(_pool) do
+			table.insert(handlist, v.key)
 		end
 	end
 
 	local visible_hands = {}
-	for _, v in ipairs(G.handlist) do
-		if SMODS.is_poker_hand_visible(v) then
-			table.insert(visible_hands, v)
+	if not handlist then
+		for _, v in ipairs(G.handlist) do
+			if SMODS.is_poker_hand_visible(v) then
+				table.insert(visible_hands, v)
+			end
+		end
+	else
+		visible_hands = handlist
+	end
+
+	local index = 0
+	for _, v in ipairs(handlist or G.handlist) do
+		local ui_element = create_UIBox_current_hand_row(v, simple, in_collection)
+		G.current_hands[index + 1] = ui_element
+		if ui_element then
+			index = index + 1
+		end
+		if index >= 10 and #visible_hands > 12 then -- keep pagination off until there's more than the vanilla max of 12 hands
+			break
 		end
 	end
 
@@ -1523,39 +1647,65 @@ function create_UIBox_current_hands(simple)
 			localize('k_page') .. ' ' .. tostring(i) .. '/' .. tostring(math.ceil(#visible_hands / 10)))
 	end
 
-	local object = {n = G.UIT.ROOT, config = {align = "cm", colour = G.C.CLEAR}, nodes = {
-		{n = G.UIT.R, config = {align = "cm", padding = 0.04}, nodes =
-			G.current_hands},
-		{n = G.UIT.R, config = {align = "cm", padding = 0}, nodes = {
-			create_option_cycle({
-				options = hand_options,
-				w = 4.5,
-				cycle_shoulders = true,
-				opt_callback = 'your_hands_page',
-				focus_args = { snap_to = true, nav = 'wide' },
-				current_option = 1,
-				colour = G.C.RED,
-				no_pips = true
-			})}}}}
+	local object = {
+		n = G.UIT.ROOT,
+		config = { align = "cm", colour = G.C.CLEAR },
+		nodes = {
+			{
+				n = G.UIT.R,
+				config = { align = "cm", padding = 0.04 },
+				nodes =
+					G.current_hands
+			},
+			-- UI consistency with vanilla
+			#visible_hands > 12 and {
+				n = G.UIT.R,
+				config = { align = "cm", padding = 0 },
+				nodes = {
+					create_option_cycle({
+						options = hand_options,
+						w = 4.5,
+						cycle_shoulders = true,
+						opt_callback = 'your_hands_page',
+						focus_args = { snap_to = true, nav = 'wide' },
+						current_option = 1,
+						colour = G.ACTIVE_MOD_UI and (G.ACTIVE_MOD_UI.ui_config or {}).collection_option_cycle_colour or
+						G.C.RED,
+						no_pips = true,
+						in_collection = in_collection
+					}) }
+			} or nil }
+	}
 
-	local t = {n = G.UIT.ROOT, config = {align = "cm", minw = 3, padding = 0.1, r = 0.1, colour = G.C.CLEAR}, nodes = {
-		{n = G.UIT.O, config = {
-				id = 'hand_list',
-				object = UIBox {
-					definition = object, config = {offset = { x = 0, y = 0 }, align = 'cm'}
-				}
-			}}}}
-	return t
+	local t = {
+		n = G.UIT.O,
+		config = {
+			id = 'hand_list',
+			object = UIBox {
+				definition = object, config = { offset = { x = 0, y = 0 }, align = 'cm' }
+			}
+		}
+	}
+	return not in_collection and
+	{ n = G.UIT.ROOT, config = { align = "cm", minw = 3, padding = 0.1, r = 0.1, colour = G.C.CLEAR }, nodes = { t } } or
+	t
 end
 
 G.FUNCS.your_hands_page = function(args)
 	if not args or not args.cycle_config then return end
 	G.current_hands = {}
-
+	local in_collection = args.cycle_config.in_collection
+	local _pool = in_collection and SMODS.collection_pool(SMODS.PokerHands) or nil
+	local handlist = in_collection and {} or nil
+	if _pool then
+		for _, v in ipairs(_pool) do
+			table.insert(handlist, v.key)
+		end
+	end
 
 	local index = 0
-	for _, v in ipairs(G.handlist) do
-		local ui_element = create_UIBox_current_hand_row(v, simple)
+	for _, v in ipairs(handlist or G.handlist) do
+		local ui_element = create_UIBox_current_hand_row(v, simple, in_collection)
 		if index >= (0 + 10 * (args.cycle_config.current_option - 1)) and index < 10 * args.cycle_config.current_option then
 			G.current_hands[index - (10 * (args.cycle_config.current_option - 1)) + 1] = ui_element
 		end
@@ -1570,10 +1720,14 @@ G.FUNCS.your_hands_page = function(args)
 	end
 
 	local visible_hands = {}
-	for _, v in ipairs(G.handlist) do
-		if SMODS.is_poker_hand_visible(v) then
-			table.insert(visible_hands, v)
+	if not handlist then
+		for _, v in ipairs(G.handlist) do
+			if SMODS.is_poker_hand_visible(v) then
+				table.insert(visible_hands, v)
+			end
 		end
+	else
+		visible_hands = handlist
 	end
 
 	local hand_options = {}
@@ -1582,10 +1736,16 @@ G.FUNCS.your_hands_page = function(args)
 			localize('k_page') .. ' ' .. tostring(i) .. '/' .. tostring(math.ceil(#visible_hands / 10)))
 	end
 
-	local object = {n = G.UIT.ROOT, config = {align = "cm", colour = G.C.CLEAR }, nodes = {
-			{n = G.UIT.R, config = {align = "cm", padding = 0.04 }, nodes = G.current_hands
+	local object = {
+		n = G.UIT.ROOT,
+		config = { align = "cm", colour = G.C.CLEAR },
+		nodes = {
+			{ n = G.UIT.R, config = { align = "cm", padding = 0.04 }, nodes = G.current_hands
 			},
-			{n = G.UIT.R, config = {align = "cm", padding = 0 }, nodes = {
+			{
+				n = G.UIT.R,
+				config = { align = "cm", padding = 0 },
+				nodes = {
 					create_option_cycle({
 						options = hand_options,
 						w = 4.5,
@@ -1594,9 +1754,10 @@ G.FUNCS.your_hands_page = function(args)
 						'your_hands_page',
 						focus_args = { snap_to = true, nav = 'wide' },
 						current_option = args.cycle_config.current_option,
-						colour = G
-							.C.RED,
-						no_pips = true
+						colour = G.ACTIVE_MOD_UI and (G.ACTIVE_MOD_UI.ui_config or {}).collection_option_cycle_colour or
+						G.C.RED,
+						no_pips = true,
+						in_collection = in_collection
 					})
 				}
 			}
@@ -1609,7 +1770,7 @@ G.FUNCS.your_hands_page = function(args)
 			hand_list.config.object:remove()
 		end
 		hand_list.config.object = UIBox {
-			definition = object, config = {offset = { x = 0, y = 0 }, align = 'cm', parent = hand_list }
+			definition = object, config = { offset = { x = 0, y = 0 }, align = 'cm', parent = hand_list }
 		}
 	end
 end
@@ -1635,9 +1796,9 @@ end
 
 function Card:set_sprites(_center, _front)
     if _front then
-        local _atlas, _pos = get_front_spriteinfo(_front)
+        local _atlas, _pos, _sprite_args = get_front_spriteinfo(_front)
         if self.children.front then self.children.front:remove() end
-		self.children.front = Sprite(self.T.x, self.T.y, self.T.w, self.T.h, _atlas, _pos)
+		self.children.front = SMODS.create_sprite(self.T.x, self.T.y, self.T.w, self.T.h, _atlas, _pos, _sprite_args)
 		self.children.front.states.hover = self.states.hover
 		self.children.front.states.click = self.states.click
 		self.children.front.states.drag = self.states.drag
@@ -1647,14 +1808,18 @@ function Card:set_sprites(_center, _front)
     if _center then
         if _center.set then
             if self.children.center then self.children.center:remove() end
-			if _center.set == 'Joker' and not _center.unlocked and not self.params.bypass_discovery_center then
-				self.children.center = Sprite(self.T.x, self.T.y, self.T.w, self.T.h, G.ASSET_ATLAS["Joker"], G.j_locked.pos)
-			elseif self.config.center.set == 'Voucher' and not self.config.center.unlocked and not self.params.bypass_discovery_center then
-				self.children.center = Sprite(self.T.x, self.T.y, self.T.w, self.T.h, G.ASSET_ATLAS["Voucher"], G.v_locked.pos)
-			elseif self.config.center.consumeable and self.config.center.demo then
-				self.children.center = Sprite(self.T.x, self.T.y, self.T.w, self.T.h, G.ASSET_ATLAS["Tarot"], G.c_locked.pos)
-			elseif not self.params.bypass_discovery_center and (_center.set == 'Edition' or _center.set == 'Joker' or _center.consumeable or _center.set == 'Voucher' or _center.set == 'Booster') and not _center.discovered then
-				local atlas = G.ASSET_ATLAS[
+			if _center.unlocked == false and not self.params.bypass_discovery_center then
+				if _center.locked_atlas or _center.locked_pos then
+					self.children.center = SMODS.create_sprite(self.T.x, self.T.y, self.T.w, self.T.h, _center.locked_atlas or _center.atlas, _center.locked_pos or {x=0, y=0})
+				elseif _center.set == 'Voucher' then					
+					self.children.center = SMODS.create_sprite(self.T.x, self.T.y, self.T.w, self.T.h, "Voucher", G.v_locked.pos)
+				elseif self.config.center.consumeable then
+					self.children.center = SMODS.create_sprite(self.T.x, self.T.y, self.T.w, self.T.h, "Tarot", G.c_locked.pos)
+				else			
+					self.children.center = SMODS.create_sprite(self.T.x, self.T.y, self.T.w, self.T.h, "Joker", G.j_locked.pos)
+				end
+			elseif not self.params.bypass_discovery_center and (_center.consumeable or SMODS.UndiscoveredCompat[_center.set]) and not _center.discovered then
+				local atlas = SMODS.get_atlas(
 					(_center.undiscovered and
 						(_center.undiscovered[G.SETTINGS.colourblind_option and 'hc_atlas' or 'lc_atlas'] or
 						_center.undiscovered.atlas)
@@ -1665,15 +1830,16 @@ function Card:set_sprites(_center, _front)
 						SMODS.UndiscoveredSprites[_center.set].atlas)
 					) or
 					_center.set
-				] or G.ASSET_ATLAS["Joker"]
+				) or SMODS.get_atlas("Joker")
 				local pos = (_center.undiscovered and _center.undiscovered.pos) or
 					(SMODS.UndiscoveredSprites[_center.set] and SMODS.UndiscoveredSprites[_center.set].pos) or
 					G.j_undiscovered.pos
-				self.children.center = Sprite(self.T.x, self.T.y, self.T.w, self.T.h, atlas, pos)
+				self.children.center = SMODS.create_sprite(self.T.x, self.T.y, self.T.w, self.T.h, atlas, pos)
 			elseif _center.set == 'Joker' or _center.consumeable or _center.set == 'Voucher' then
-				self.children.center = Sprite(self.T.x, self.T.y, self.T.w, self.T.h, G.ASSET_ATLAS[_center[G.SETTINGS.colourblind_option and 'hc_atlas' or 'lc_atlas'] or _center.atlas or _center.set], self.config.center.pos)
+				local atlas_key = _center[G.SETTINGS.colourblind_option and 'hc_atlas' or 'lc_atlas'] or _center.atlas or _center.set
+				self.children.center = SMODS.create_sprite(self.T.x, self.T.y, self.T.w, self.T.h, atlas_key, _center.pos or {x=0, y=0}, _center.sprite_args)
 			else
-				self.children.center = Sprite(self.T.x, self.T.y, self.T.w, self.T.h, G.ASSET_ATLAS[_center.atlas or 'centers'], _center.pos)
+				self.children.center = SMODS.create_sprite(self.T.x, self.T.y, self.T.w, self.T.h, _center.atlas or 'centers', _center.pos, _center.sprite_args)
 			end
 			self.children.center.states.hover = self.states.hover
 			self.children.center.states.click = self.states.click
@@ -1690,23 +1856,25 @@ function Card:set_sprites(_center, _front)
                 self.children.center.scale.y = self.children.center.scale.x
             end
             if _center.pixel_size and _center.pixel_size.h and (_center.discovered or self.bypass_discovery_center) then
-                self.children.center.scale.y = self.children.center.scale.y*(_center.pixel_size.h/95)
+                self.children.center.scale.y = self.children.center.scale.y*(_center.pixel_size.h/self.children.center.atlas.py)
             end
             if _center.pixel_size and _center.pixel_size.w and (_center.discovered or self.bypass_discovery_center) then
-                self.children.center.scale.x = self.children.center.scale.x*(_center.pixel_size.w/71)
+                self.children.center.scale.x = self.children.center.scale.x*(_center.pixel_size.w/self.children.center.atlas.px)
             end
         end
 
-        if _center.soul_pos then
+        if _center.soul_pos or _center[G.SETTINGS.colourblind_option and 'hc_soul_atlas' or 'lc_soul_atlas'] or _center.soul_atlas then
 			if self.children.floating_sprite then self.children.floating_sprite:remove() end
-            self.children.floating_sprite = Sprite(self.T.x, self.T.y, self.T.w, self.T.h, G.ASSET_ATLAS[_center[G.SETTINGS.colourblind_option and 'hc_atlas' or 'lc_atlas'] or _center.atlas or _center.set], self.config.center.soul_pos)
+            local atlas_key = _center[G.SETTINGS.colourblind_option and 'hc_soul_atlas' or 'lc_soul_atlas'] or _center.soul_atlas or _center[G.SETTINGS.colourblind_option and 'hc_atlas' or 'lc_atlas'] or _center.atlas or _center.set
+            self.children.floating_sprite = SMODS.create_sprite(self.T.x, self.T.y, self.T.w, self.T.h, atlas_key, _center.soul_pos or { x = 0, y = 0 }, (_center.soul_pos or {}).sprite_args)
             self.children.floating_sprite.role.draw_major = self
             self.children.floating_sprite.states.hover.can = false
             self.children.floating_sprite.states.click.can = false
         end
 
         if self.children.back then self.children.back:remove() end
-		self.children.back = Sprite(self.T.x, self.T.y, self.T.w, self.T.h, G.ASSET_ATLAS[(G.GAME.viewed_back or G.GAME.selected_back) and ((G.GAME.viewed_back or G.GAME.selected_back)[G.SETTINGS.colourblind_option and 'hc_atlas' or 'lc_atlas'] or (G.GAME.viewed_back or G.GAME.selected_back).atlas) or 'centers'], self.params.bypass_back or (self.playing_card and G.GAME[self.back].pos or G.P_CENTERS['b_red'].pos))
+		local atlas_key = (G.GAME.viewed_back or G.GAME.selected_back) and ((G.GAME.viewed_back or G.GAME.selected_back)[G.SETTINGS.colourblind_option and 'hc_atlas' or 'lc_atlas'] or (G.GAME.viewed_back or G.GAME.selected_back).atlas) or 'centers'
+		self.children.back = SMODS.create_sprite(self.T.x, self.T.y, self.T.w, self.T.h, atlas_key, self.params.bypass_back or (self.playing_card and G.GAME[self.back].pos or G.P_CENTERS['b_red'].pos), (G.GAME.viewed_back or G.GAME.selected_back or {}).sprite_args)
 		self.children.back.states.hover = self.states.hover
 		self.children.back.states.click = self.states.click
 		self.children.back.states.drag = self.states.drag
@@ -1716,6 +1884,148 @@ function Card:set_sprites(_center, _front)
             _center:set_sprites(self, _front)
         end
     end
+end
+
+function get_front_spriteinfo(_front)
+	if _front and _front.suit and G.SETTINGS.CUSTOM_DECK and G.SETTINGS.CUSTOM_DECK.Collabs then
+		local collab = G.SETTINGS.CUSTOM_DECK.Collabs[_front.suit]
+		if collab then
+			local deckSkin = SMODS.DeckSkins[collab]
+			if deckSkin then
+				if deckSkin.outdated then
+					local sprite_args = (deckSkin.sprite_args_by_value or {})[_front.value]
+					local hasRank = false
+					for i = 1, #deckSkin.ranks do
+						if deckSkin.ranks[i] == _front.value then hasRank = true break end
+					end
+					if hasRank then
+						local atlas = SMODS.get_atlas(G.SETTINGS.colour_palettes[_front.suit] == 'hc' and deckSkin.hc_atlas or deckSkin.lc_atlas)
+						if atlas then
+							if deckSkin.pos_style == 'collab' then
+								return atlas, G.COLLABS.pos[_front.value],sprite_args
+							elseif deckSkin.pos_style == 'suit' then
+								return atlas, { x = _front.pos.x, y = 0}, sprite_args
+							elseif deckSkin.pos_style == 'deck' then
+								return atlas, _front.pos, sprite_args
+							elseif deckSkin.pos_style == 'ranks' or nil then
+								for i, rank in ipairs(deckSkin.ranks) do
+									if rank == _front.value then
+										return atlas, { x = i - 1, y = 0}, sprite_args
+									end
+								end
+							end
+						end
+					end
+                    local atlas = SMODS.get_atlas(G.SETTINGS.colour_palettes[_front.suit] == 'hc' and _front.hc_atlas or _front.lc_atlas or {}) or SMODS.get_atlas(_front.atlas) or SMODS.get_atlas("cards_"..(G.SETTINGS.colour_palettes[_front.suit] == 'hc' and 2 or 1))
+					return atlas, _front.pos, sprite_args
+				else
+					local palette = deckSkin.palette_map and deckSkin.palette_map[G.SETTINGS.colour_palettes[_front.suit] or ''] or (deckSkin.palettes or {})[1]
+					local sprite_args = (palette.sprite_args_by_value or {})[_front.value] or (deckSkin.sprite_args_by_value or {})[_front.value]
+					local hasRank = false
+					for i = 1, #palette.ranks do
+						if palette.ranks[i] == _front.value then hasRank = true break end
+					end
+					if hasRank then
+						local atlas = SMODS.get_atlas(palette.atlas)
+						if type(palette.pos_style) == "table" then
+							if palette.pos_style[_front.value] then
+								if palette.pos_style[_front.value].atlas then
+									atlas = SMODS.get_atlas(palette.pos_style[_front.value].atlas)
+								end
+								if palette.pos_style[_front.value].pos then
+									return atlas, palette.pos_style[_front.value].pos, sprite_args
+								end
+							elseif palette.pos_style.fallback_style then
+								if palette.pos_style.fallback_style == 'collab' then
+									return atlas, G.COLLABS.pos[_front.value], sprite_args
+								elseif palette.pos_style.fallback_style == 'suit' then
+									return atlas, { x = _front.pos.x, y = 0}, sprite_args
+								elseif palette.pos_style.fallback_style == 'deck' then
+									return atlas, _front.pos, sprite_args
+								end
+							end
+						elseif palette.pos_style == 'collab' then
+							return atlas, G.COLLABS.pos[_front.value], sprite_args
+						elseif palette.pos_style == 'suit' then
+							return atlas, { x = _front.pos.x, y = 0}, sprite_args
+						elseif palette.pos_style == 'deck' then
+							return atlas, _front.pos, sprite_args
+						elseif palette.pos_style == 'ranks' or nil then
+							for i, rank in ipairs(palette.ranks) do
+								if rank == _front.value then
+									return atlas, { x = i - 1, y = 0}, sprite_args
+								end
+							end
+						end
+					end
+                    local atlas = SMODS.get_atlas(palette.hc_default and _front.hc_atlas or _front.lc_atlas or {}) or SMODS.get_atlas(_front.atlas) or SMODS.get_atlas("cards_"..(palette.hc_default and 2 or 1))
+					return atlas, _front.pos, sprite_args
+				end
+			end
+		end
+	end
+    local atlas = SMODS.get_atlas(G.SETTINGS.colourblind_option and _front.hc_atlas or _front.lc_atlas or {}) or SMODS.get_atlas(_front.atlas) or SMODS.get_atlas("cards_"..(G.SETTINGS.colourblind_option and 2 or 1))
+	return atlas, _front.pos, _front.sprite_args
+end
+
+
+function create_UIBox_notify_alert(_achievement, _type)
+  local _c, _atlas = G.P_CENTERS[_achievement],
+    _type == 'Joker' and SMODS.get_atlas("Joker") or
+    _type == 'Voucher' and SMODS.get_atlas("Voucher") or
+    _type == 'Back' and SMODS.get_atlas("centers") or
+    SMODS.get_atlas("icons")
+    local _smods_atlas = _c and ((G.SETTINGS.colourblind_option and _c.hc_atlas or _c.lc_atlas) or _c.atlas)
+    if _smods_atlas then
+        _atlas = SMODS.get_atlas(_smods_atlas) or _atlas
+    end
+
+  if SMODS.Achievements[_achievement] then _c = SMODS.Achievements[_achievement]; _atlas = SMODS.get_atlas(_c.atlas) end
+  local t_s =  SMODS.create_sprite(0,0,1.5*(_atlas.px/_atlas.py),1.5, _atlas.key or _atlas.name,  _c and _c.pos or {x=3, y=0})
+
+  t_s.states.drag.can = false
+  t_s.states.hover.can = false
+  t_s.states.collide.can = false
+
+  local subtext = _type == 'achievement' and localize(G.F_TROPHIES and 'k_trophy' or 'k_achievement') or
+    _type == 'Joker' and localize('k_joker') or
+    _type == 'Voucher' and localize('k_voucher') or
+	_type == 'Back' and localize('k_deck') or
+	_c.set and localize('k_' .. _c.set:lower()) or
+	'ERROR'
+
+  if _achievement == 'b_challenge' then subtext = localize('k_challenges') end
+  local name = _type == 'achievement' and localize(_achievement, 'achievement_names') or 'ERROR'
+
+    local t = {n=G.UIT.ROOT, config = {align = 'cl', r = 0.1, padding = 0.06, colour = G.C.UI.TRANSPARENT_DARK}, nodes={
+    {n=G.UIT.R, config={align = "cl", padding = 0.2, minw = 20, r = 0.1, colour = G.C.BLACK, outline = 1.5, outline_colour = G.C.GREY}, nodes={
+      {n=G.UIT.R, config={align = "cm", r = 0.1}, nodes={
+        {n=G.UIT.R, config={align = "cm", r = 0.1}, nodes={
+          {n=G.UIT.O, config={object = t_s}},
+        }},
+        _type ~= 'achievement' and {n=G.UIT.R, config={align = "cm", padding = 0.04}, nodes={
+          {n=G.UIT.R, config={align = "cm", maxw = 3.4}, nodes={
+            {n=G.UIT.T, config={text = subtext, scale = 0.5, colour = G.C.FILTER, shadow = true}},
+          }},
+          {n=G.UIT.R, config={align = "cm", maxw = 3.4}, nodes={
+            {n=G.UIT.T, config={text = localize('k_unlocked_ex'), scale = 0.35, colour = G.C.FILTER, shadow = true}},
+          }}
+        }}
+        or {n=G.UIT.R, config={align = "cm", padding = 0.04}, nodes={
+          {n=G.UIT.R, config={align = "cm", maxw = 3.4, padding = 0.1}, nodes={
+            {n=G.UIT.T, config={text = name, scale = 0.4, colour = G.C.UI.TEXT_LIGHT, shadow = true}},
+          }},
+          {n=G.UIT.R, config={align = "cm", maxw = 3.4}, nodes={
+            {n=G.UIT.T, config={text = subtext, scale = 0.3, colour = G.C.FILTER, shadow = true}},
+          }},
+          {n=G.UIT.R, config={align = "cm", maxw = 3.4}, nodes={
+            {n=G.UIT.T, config={text = localize('k_unlocked_ex'), scale = 0.35, colour = G.C.FILTER, shadow = true}},
+          }}
+        }}
+      }}
+    }}
+  }}
+  return t
 end
 
 -- Init custom card parameters.
@@ -1763,26 +2073,20 @@ end
 -- silent = boolean value
 function Card:set_edition(edition, immediate, silent, delay)
 	SMODS.enh_cache:write(self, nil)
-	-- Check to see if negative is being removed and reduce card_limit accordingly
-	if (self.added_to_deck or self.joker_added_to_deck_but_debuffed or (self.area == G.hand and not self.debuff)) and self.edition and self.edition.card_limit then
-		if self.ability.consumeable and self.area == G.consumeables then
-			G.consumeables.config.card_limit = G.consumeables.config.card_limit - self.edition.card_limit
-		elseif self.ability.set == 'Joker' and self.area == G.jokers then
-			G.jokers.config.card_limit = G.jokers.config.card_limit - self.edition.card_limit
-		elseif self.area == G.hand then
-			if G.hand.config.real_card_limit then
-				G.hand.config.real_card_limit = G.hand.config.real_card_limit - self.edition.card_limit
-			end
-			G.hand.config.card_limit = G.hand.config.card_limit - self.edition.card_limit
-		end
+
+	silent = silent or SMODS.create_card_silent_edition
+
+	if self.edition then
+		self.ability.card_limit = self.ability.card_limit - (self.edition.card_limit or 0)
+		self.ability.extra_slots_used = self.ability.extra_slots_used - (self.edition.extra_slots_used or 0)
 	end
 
-	local old_edition = self.edition and self.edition.key
-	if old_edition then
-		self.ignore_base_shader[old_edition] = nil
-		self.ignore_shadow[old_edition] = nil
+	local old_edition = self.edition
+	if old_edition and old_edition.key then
+		self.ignore_base_shader[old_edition.key] = nil
+		self.ignore_shadow[old_edition.key] = nil
 
-		local on_old_edition_removed = G.P_CENTERS[old_edition] and G.P_CENTERS[old_edition].on_remove
+		local on_old_edition_removed = G.P_CENTERS[old_edition.key] and G.P_CENTERS[old_edition.key].on_remove
 		if type(on_old_edition_removed) == "function" then
 			on_old_edition_removed(self)
 		end
@@ -1823,6 +2127,16 @@ function Card:set_edition(edition, immediate, silent, delay)
 				end
 			}))
 		end
+		if delay then
+			self.delay_edition = old_edition
+			G.E_MANAGER:add_event(Event({
+				trigger = 'immediate',
+				func = function()
+					self.delay_edition = nil
+					return true
+				end
+			}))
+		end
 		return
 	end
 
@@ -1851,32 +2165,6 @@ function Card:set_edition(edition, immediate, silent, delay)
 	local on_edition_applied = p_edition.on_apply
 	if type(on_edition_applied) == "function" then
 		on_edition_applied(self)
-	end
-
-
-	if self.edition.card_limit then
-		if (self.added_to_deck or self.joker_added_to_deck_but_debuffed or (self.area == G.hand and not self.debuff)) and G.jokers and G.consumeables then
-			if self.ability.consumeable then
-				G.consumeables.config.card_limit = G.consumeables.config.card_limit + self.edition.card_limit
-			elseif self.ability.set == 'Joker' then
-				G.jokers.config.card_limit = G.jokers.config.card_limit + self.edition.card_limit
-			elseif self.area == G.hand then
-				local is_in_pack = (G.STATE == G.STATES.TAROT_PACK or G.STATE == G.STATES.SPECTRAL_PACK or (G.STATE == G.STATES.SMODS_BOOSTER_OPENED and SMODS.OPENED_BOOSTER.config.center.draw_hand))
-				G.E_MANAGER:add_event(Event({
-					trigger = 'immediate',
-					func = function()
-						if G.hand.config.real_card_limit then
-							G.hand.config.real_card_limit = G.hand.config.real_card_limit + self.edition.card_limit
-						end
-						G.hand.config.card_limit = G.hand.config.card_limit + self.edition.card_limit
-						if not is_in_pack and G.GAME.blind.in_blind and G.hand.config.card_limit > #G.hand.cards then
-							G.FUNCS.draw_from_deck_to_hand(math.min(self.edition.card_limit, G.hand.config.card_limit - #G.hand.cards))
-						end
-						return true
-					end
-				}))
-			end
-		end
 	end
 
 	if self.area and self.area == G.jokers then
@@ -1917,7 +2205,7 @@ function Card:set_edition(edition, immediate, silent, delay)
 	end
 
 	if delay then
-		self.delay_edition = true
+		self.delay_edition = old_edition or {base = true}
 		G.E_MANAGER:add_event(Event({
 			trigger = 'immediate',
 			func = function()
@@ -1926,6 +2214,10 @@ function Card:set_edition(edition, immediate, silent, delay)
 			end
 		}))
 	end
+
+	self.ability.card_limit = self.ability.card_limit + (self.edition.card_limit or 0)
+	self.ability.extra_slots_used = self.ability.extra_slots_used + (self.edition.extra_slots_used or 0)
+
 
 	if G.jokers and self.area == G.jokers then
 		check_for_unlock({ type = 'modify_jokers' })
@@ -1941,6 +2233,14 @@ end
 -- _options = list of keys of editions to include in the poll
 -- OR list of tables { name = key, weight = number }
 function poll_edition(_key, _mod, _no_neg, _guaranteed, _options)
+	if not _options and (_key == "wheel_of_fortune" or _key == "aura") then -- set base game edition polling
+		_options = { 'e_negative', 'e_polychrome', 'e_holo', 'e_foil' }
+	end
+
+	-- Use SMODS object weight system when enabled
+	if SMODS.optional_features.object_weights then return SMODS.poll_object({type = 'Edition', seed = _key, guaranteed = _guaranteed, pool = _options, no_negative = _no_neg, mod = _mod}) end
+
+	
 	local _modifier = 1
 	local edition_poll = pseudorandom(pseudoseed(_key or 'edition_generic')) -- Generate the poll value
 	local available_editions = {}                                          -- Table containing a list of editions and their weights
@@ -2029,14 +2329,16 @@ function get_joker_win_sticker(_center, index)
 		local applied = {}
 		local _count = 0
 		local _stake = nil
-		for k, v in pairs(joker_usage.wins_by_key or {}) do
-			SMODS.build_stake_chain(G.P_STAKES[k], applied)
+		for k, stake in pairs(G.P_STAKES) do
+			if (joker_usage.wins_by_key or {})[k] then
+				SMODS.build_stake_chain(stake, applied)
+			end
 		end
 		for i, v in ipairs(G.P_CENTER_POOLS.Stake) do
 			if applied[v.order] then
 				_count = _count+1
 				if (v.stake_level or 0) > (_stake and G.P_STAKES[_stake].stake_level or 0) then
-					_stake = v.key
+					_stake = G.sticker_map[v.key] and v.key or _stake
 				end
 			end
 		end
@@ -2052,10 +2354,12 @@ function get_deck_win_stake(_deck_key)
 		local deck_count = 0
 		for _, deck in pairs(G.PROFILES[G.SETTINGS.profile].deck_usage) do
 			local deck_won_with = false
-			for key, _ in pairs(deck.wins_by_key or {}) do
-				deck_won_with = true
-				if (G.P_STAKES[key] and G.P_STAKES[key].stake_level or 0) > (_stake and G.P_STAKES[_stake].stake_level or 0) then
-					_stake = key
+			for key, stake in pairs(G.P_STAKES) do
+				if (deck.wins_by_key or {})[key] then
+					deck_won_with = true
+					if (stake.stake_level or 0) > (_stake and G.P_STAKES[_stake].stake_level or 0) then
+						_stake = key
+					end
 				end
 			end
 			if deck_won_with then deck_count = deck_count + 1 end
@@ -2068,9 +2372,11 @@ function get_deck_win_stake(_deck_key)
 	end
 	if G.PROFILES[G.SETTINGS.profile].deck_usage[_deck_key] and G.PROFILES[G.SETTINGS.profile].deck_usage[_deck_key].wins_by_key then
 		local _stake = nil
-		for key, _ in pairs(G.PROFILES[G.SETTINGS.profile].deck_usage[_deck_key].wins_by_key) do
-			if (G.P_STAKES[key] and G.P_STAKES[key].stake_level or 0) > (_stake and G.P_STAKES[_stake].stake_level or 0) then
-				_stake = key
+		for key, stake in pairs(G.P_STAKES) do
+			if G.PROFILES[G.SETTINGS.profile].deck_usage[_deck_key].wins_by_key[key] then
+				if (stake.stake_level or 0) > (_stake and G.P_STAKES[_stake].stake_level or 0) then
+					_stake = key
+				end
 			end
 		end
 		if _stake then return G.P_STAKES[_stake].order end
@@ -2082,9 +2388,11 @@ function get_deck_win_sticker(_center)
 	if G.PROFILES[G.SETTINGS.profile].deck_usage[_center.key] and
 	G.PROFILES[G.SETTINGS.profile].deck_usage[_center.key].wins_by_key then
 		local _stake = nil
-		for key, _ in pairs(G.PROFILES[G.SETTINGS.profile].deck_usage[_center.key].wins_by_key) do
-			if (G.P_STAKES[key] and G.P_STAKES[key].stake_level or 0) > (_stake and G.P_STAKES[_stake].stake_level or 0) then
-				_stake = key
+		for key, stake in pairs(G.P_STAKES) do
+			if G.PROFILES[G.SETTINGS.profile].deck_usage[_center.key].wins_by_key[key] then
+				if (stake.stake_level or 0) > (_stake and G.P_STAKES[_stake].stake_level or 0) then
+					_stake = G.sticker_map[key] and key or _stake
+				end
 			end
 		end
 		if _stake then return G.sticker_map[_stake] end
@@ -2095,16 +2403,14 @@ function set_deck_win()
 	if G.GAME.selected_back and G.GAME.selected_back.effect and G.GAME.selected_back.effect.center and G.GAME.selected_back.effect.center.key then
 		local deck_key = G.GAME.selected_back.effect.center.key
 		local deck_usage = G.PROFILES[G.SETTINGS.profile].deck_usage[deck_key]
-		if not deck_usage then deck_usage = { count = 1, order =
+		if not deck_usage then deck_usage = convert_usage_entry{ count = 1, order =
 			G.GAME.selected_back.effect.center.order, wins = {}, losses = {}, wins_by_key = {}, losses_by_key = {} } end
 		if deck_usage then
-			deck_usage.wins[G.GAME.stake] = (deck_usage.wins[G.GAME.stake] or 0) + 1
 			deck_usage.wins_by_key[SMODS.stake_from_index(G.GAME.stake)] = (deck_usage.wins_by_key[SMODS.stake_from_index(G.GAME.stake)] or 0) + 1
 			local applied = SMODS.build_stake_chain(G.P_STAKES[SMODS.stake_from_index(G.GAME.stake)]) or {}
 			for i, v in ipairs(G.P_CENTER_POOLS.Stake) do
 				if applied[i] then
-					deck_usage.wins[i] = math.max(deck_usage.wins[i] or 0, 1)
-					deck_usage.wins_by_key[SMODS.stake_from_index(i)] = math.max(deck_usage.wins_by_key[SMODS.stake_from_index(i)] or 0, 1)
+					deck_usage.wins_by_key[v.key] = math.max(deck_usage.wins_by_key[v.key] or 0, 1)
 				end
 			end
 		end
@@ -2117,7 +2423,9 @@ end
 function Card:align_h_popup()
 	local focused_ui = self.children.focused_ui and true or false
 	local popup_direction = (self.children.buy_button or (self.area and self.area.config.view_deck) or (self.area and self.area.config.type == 'shop')) and 'cl' or
-							(self.T.y > G.CARD_H*0.8 and self.T.y < G.CARD_H*1.8) and ((self.T.x > G.ROOM.T.w*0.4) and "cl" or "cr") or
+							(self.params.run_select_stake_tower) and 'cl' or
+							(self.params.run_select_selection_choice and self.params.stake) and 'bm' or
+							((self.T.y > G.CARD_H*0.8 and self.T.y < G.CARD_H*1.8) or self.params.run_select_selection_choice ) and ((self.T.x > G.ROOM.T.w*0.4) and "cl" or "cr") or
 							(self.T.y < G.CARD_H*0.8) and 'bm' or
 							'tm'
 	local sign = 1
@@ -2156,17 +2464,34 @@ function get_pack(_key, _type)
         G.GAME.first_shop_buffoon = true
         return G.P_CENTERS['p_buffoon_normal_'..(math.random(1, 2))]
     end
+
+	-- Use SMODS object weight system when enabled
+	if SMODS.optional_features.object_weights then
+		return G.P_CENTERS[SMODS.poll_object({type = 'Booster', seed = (_key or 'pack_generic')..G.GAME.round_resets.ante,
+            filter = _type and function(pool)
+				local all_unavailable = true
+                for _, v in ipairs(pool) do
+                    if not G.P_CENTERS[v.key] or G.P_CENTERS[v.key].kind ~= _type then
+                        v.key = "UNAVAILABLE"
+                    else
+                        all_unavailable = false
+                    end
+                end
+				if all_unavailable then
+					pool[#pool+1] = {key = 'p_buffoon_normal_1', type = "Booster"}
+				end
+				return pool
+			end})]
+	end
     local cume, it, center = 0, 0, nil
 	local temp_in_pool = {}
     for k, v in ipairs(G.P_CENTER_POOLS['Booster']) do
 		local add
 		v.current_weight = v.get_weight and v:get_weight() or v.weight or 1
         if (not _type or _type == v.kind) then add = true end
-		if v.in_pool and type(v.in_pool) == 'function' then
-			local res, pool_opts = SMODS.add_to_pool(v)
-			pool_opts = pool_opts or {}
-			add = res and (add or pool_opts.override_base_checks)
-		end
+		local res, pool_opts = SMODS.add_to_pool(v)
+		pool_opts = pool_opts or {}
+		add = res and (add or pool_opts.override_base_checks)
 		if add and not G.GAME.banned_keys[v.key] then cume = cume + (v.current_weight or 1); temp_in_pool[v.key] = true end
     end
     local poll = pseudorandom(pseudoseed((_key or 'pack_generic')..G.GAME.round_resets.ante))*cume
@@ -2196,16 +2521,21 @@ G.FUNCS.change_collab = function(args)
 	end
 	G.FUNCS.update_suit_colours(args.cycle_config.curr_suit, deckskin_key, selected_palette)
 	G.FUNCS.update_collab_cards(args.to_key, args.cycle_config.curr_suit)
-	if swap_node then
-		for i=1, #swap_node.children do
-			swap_node.children[i]:remove()
-			swap_node.children[i] = nil
-		end
-		local new_palette_selector = {n=G.UIT.R, config={align = "cm", id = 'palette_selector'}, nodes={
-			create_option_cycle({options = palette_loc_options, w = 5.5, cycle_shoulders = false, curr_suit = args.cycle_config.curr_suit, curr_skin = deckskin_key, opt_callback = 'change_colour_palette', current_option = selected_palette, colour = G.C.ORANGE, focus_args = {snap_to = true, nav = 'wide'}}),
+
+	local swap_node = G.OVERLAY_MENU:get_UIE_by_ID('palette_selector')
+	for i=1, #swap_node.children do
+		swap_node.children[i]:remove()
+		swap_node.children[i] = nil
+	end
+    if #palette_loc_options > 1 then
+		local opt_cycle = create_option_cycle({options = palette_loc_options, w = 4.5, h = 0.5, text_scale = 0.3, cycle_shoulders = false, curr_suit = args.cycle_config.curr_suit, curr_skin = deckskin_key, opt_callback = 'change_colour_palette', current_option = selected_palette, colour = G.C.ORANGE, focus_args = {snap_to = true, nav = 'wide'}})
+		opt_cycle.nodes[1].config.padding = 0.085
+		local new_palette_selector = {n=G.UIT.R, config={align = "cm", id = 'palette_selector', minh = 0.85}, nodes={
+			opt_cycle
 		}}
 		swap_node.UIBox:add_child(new_palette_selector, swap_node)
-	end
+    end
+
 	for k, v in pairs(G.I.CARD) do
 		if v.config and v.config.card and v.children.front and v.ability.effect ~= 'Stone Card' then
 			v:set_sprites(nil, v.config.card)
@@ -2236,6 +2566,7 @@ end
 local defeat = Blind.defeat
 function Blind:defeat(silent)
 	defeat(self, silent)
+	G.hand.config.card_limits.blind_restriction = nil
 	SMODS.calculate_context({ blind_defeated = true })
 end
 
@@ -2249,7 +2580,7 @@ end
 local debuff_card = Blind.debuff_card
 function Blind:debuff_card(card, from_blind)
 	local flags = SMODS.calculate_context({ debuff_card = card, ignore_debuff = true })
-	if flags.prevent_debuff then 
+	if flags.prevent_debuff then
 		if card.debuff then card:set_debuff(false) end
 		return
 	elseif flags.debuff then
@@ -2274,11 +2605,11 @@ function Blind:debuff_hand(cards, hand, handname, check)
             end
         end
         local effects = {}
-        SMODS.calculate_context({modify_scoring_hand = true, other_card =  cards[i], full_hand = cards, scoring_hand = scoring_hand}, effects)
+        SMODS.calculate_context({modify_scoring_hand = true, other_card =  cards[i], full_hand = cards, scoring_hand = scoring_hand, ignore_other_debuff = true}, effects)
         local flags = SMODS.trigger_effects(effects, cards[i])
 		if flags.add_to_hand then splashed = true end
 		if flags.remove_from_hand then unsplashed = true end
-        if splashed and not unsplashed then table.insert(final_scoring_hand, G.play.cards[i]) end
+        if splashed and not unsplashed then table.insert(final_scoring_hand, cards[i]) end
     end
 	local flags = SMODS.calculate_context({ debuff_hand = true, full_hand = cards, scoring_hand = final_scoring_hand, poker_hands = hand, scoring_name = handname, check = check })
 	if flags.prevent_debuff then return false end
@@ -2293,22 +2624,29 @@ end
 
 local stay_flipped = Blind.stay_flipped
 function Blind:stay_flipped(to_area, card, from_area)
-	local ret = stay_flipped(self, to_area, card, from_area)
-	local flags = SMODS.calculate_context({ to_area = to_area, from_area = from_area, other_card = card, stay_flipped = true })
-	local self_eval, self_post = eval_card(card, { to_area = to_area, from_area = from_area, other_card = card, stay_flipped = true })
-	local self_flags = SMODS.trigger_effects({ self_eval, self_post })
-	for k,v in pairs(self_flags) do flags[k] = flags[k] or v end
-	if flags.prevent_stay_flipped then return false end
-	if flags.stay_flipped then return true end
-	return ret
+    local ret = stay_flipped(self, to_area, card, from_area)
+    local context = { to_area = to_area, from_area = from_area, other_card = card, stay_flipped = true }
+    local flags = SMODS.calculate_context(context)
+    SMODS.push_to_context_stack(context, card, "overrides.lua : Blind:stay_flipped()")
+    local self_eval, self_post = eval_card(card, context)
+    local self_flags = SMODS.trigger_effects({ self_eval, self_post })
+    for k,v in pairs(self_flags) do flags[k] = flags[k] or v end
+    SMODS.pop_from_context_stack(context, "overrides.lua : Blind:stay_flipped()")
+    if flags.modify and flags.modify.to_area then
+        SMODS.to_area = flags.modify.to_area
+    end
+    if flags.prevent_stay_flipped then return false end
+    if flags.stay_flipped then return true end
+    return ret
 end
 
 local modify_hand = Blind.modify_hand
-function Blind:modify_hand(cards, poker_hands, text, mult, hand_chips, scoring_hand)
+function Blind:modify_hand(cards, poker_hands, text, c_mult, _hand_chips, scoring_hand)
 	local modded
-	_G.mult, _G.hand_chips, modded = modify_hand(self, cards, poker_hands, text, mult, hand_chips, scoring_hand)
+	local _mult, _hand_chips, modded = modify_hand(self, cards, poker_hands, text, c_mult, _hand_chips, scoring_hand)
+	mult = mod_mult(_mult); hand_chips = mod_chips(_hand_chips)
 	local flags = SMODS.calculate_context({ modify_hand = true, poker_hands = poker_hands, scoring_name = text, scoring_hand = scoring_hand, full_hand = cards })
-	return _G.mult, _G.hand_chips, modded or flags.calculated
+	return mod_mult(mult), mod_chips(hand_chips), modded or flags.calculated
 end
 
 local card_set_base = Card.set_base
@@ -2321,10 +2659,11 @@ function Card:set_base(card, initial, manual_sprites)
                 SMODS.merge_defaults(contexts, {change_rank = true, other_card = self, new_rank = new_rank, old_rank = self.base.id, rank_increase = ((self.base.id < new_rank) and true) or false})
             end
         end
-        if card and card.suit and self.base.suit ~= card.suit then 
+        if card and card.suit and self.base.suit ~= card.suit then
             SMODS.merge_defaults(contexts, {change_suit = true, other_card = self, new_suit = card.suit, old_suit = self.base.suit})
         end
         if next(contexts) then
+			contexts.ignore_other_debuff = true
             SMODS.calculate_context(contexts)
         end
     end
@@ -2347,9 +2686,408 @@ function Card:use_consumeable(area, copier)
 end
 
 local ease_ante_ref = ease_ante
-function ease_ante(mod, ante_end)
-	local flags = SMODS.calculate_context({modify_ante = mod, ante_end = ante_end})
-	if flags.modify then mod = mod + flags.modify end
+function ease_ante(mod)
+	local flags = SMODS.calculate_context({modify_ante = mod, ante_end = SMODS.ante_end})
+	if flags.modify then mod = flags.modify end
 	ease_ante_ref(mod)
-	SMODS.calculate_context({ante_change = mod, ante_end = ante_end})
+	SMODS.calculate_context({ante_change = mod, ante_end = SMODS.ante_end})
+end
+
+local eval_card_ref = eval_card
+function eval_card(card, context)
+	SMODS.push_to_context_stack(context, card, "overrides.lua : eval_card")
+	local eff, post = eval_card_ref(card, context)
+	SMODS.pop_from_context_stack(context, "overrides.lua : eval_card")
+	return eff, post
+end
+
+local calculate_seal_ref = Card.calculate_seal
+function Card:calculate_seal(context, ...)
+	SMODS.push_to_context_stack(context, self, "overrides.lua : Card.calculate_seal")
+	local eff, post = calculate_seal_ref(self, context, ...)
+	SMODS.pop_from_context_stack(context, "overrides.lua : Card.calculate_seal")
+	return eff, post
+end
+
+local calculate_joker_ref = Card.calculate_joker
+function Card:calculate_joker(context, ...)
+	SMODS.push_to_context_stack(context, self, "overrides.lua : Card.calculate_joker")
+	local eff, post = calculate_joker_ref(self, context, ...)
+	SMODS.pop_from_context_stack(context, "overrides.lua : Card.calculate_joker")
+	return eff, post
+end
+
+local set_ability = Card.set_ability
+function Card:set_ability(center, initial, delay_sprites)
+    if delay_sprites == "quantum" then return self:quantum_set_ability(center) end
+	local old_center = self.config.center
+	if delay_sprites and not initial then 
+		self.delay_center = old_center
+	end
+	set_ability(self, center, initial, delay_sprites)
+	if not initial and (G.STATE ~= G.STATES.SMODS_BOOSTER_OPENED and G.STATE ~= G.STATES.SHOP and not G.SETTINGS.paused or G.TAROT_INTERRUPT) then
+		SMODS.calculate_context({setting_ability = true, old = old_center.key, new = self.config.center_key, other_card = self, unchanged = old_center.key == self.config.center.key})
+	end
+	self.front_hidden = self:should_hide_front()
+end
+
+local add_tag_ref = add_tag
+function add_tag(_tag)
+	_tag = _tag or {}
+	_tag.key = _tag.key or 'unknown'
+	assert(G.P_TAGS[_tag.key], ("Could not find tag \"%s\"."):format(_tag.key))
+	if not (_tag.is and _tag:is(Tag)) then
+		_tag = Tag(_tag.key, nil, _tag.blind_type)
+	end
+	add_tag_ref(_tag)
+end
+
+function Card:quantum_set_ability(center)
+    SMODS.enh_cache:write(self, nil)
+
+    if self.ability then
+        self.ability.card_limit = self.ability.card_limit - (self.config.center.config.card_limit or 0)
+        self.ability.extra_slots_used = self.ability.extra_slots_used - (self.config.center.config.extra_slots_used or 0)
+    end
+
+    local old_center = self.config.center
+    self.from_quantum = true
+    if type(center) == 'string' then
+        assert(G.P_CENTERS[center], ("Could not find center \"%s\""):format(center))
+        center = G.P_CENTERS[center]
+    end
+    self.config.center = center
+    if self.config.center.key then
+        self.config.center_key = self.config.center.key
+    else
+        for k, v in pairs(G.P_CENTERS) do
+            if center == v then self.config.center_key = k end
+        end
+    end
+
+    if self.ability and old_center and old_center.config.bonus then
+        self.ability.bonus = self.ability.bonus - old_center.config.bonus
+    end
+
+    self.ARGS.smods_quantum_ability = self.ARGS.smods_quantum_ability or {}
+    local new_ability = self.ARGS.smods_quantum_ability
+
+    new_ability.name = center.name
+    new_ability.effect = center.effect
+    new_ability.set = center.set
+    new_ability.mult = center.config.mult or 0
+    new_ability.h_mult = center.config.h_mult or 0
+    new_ability.h_x_mult = center.config.h_x_mult or 0
+    new_ability.h_dollars = center.config.h_dollars or 0
+    new_ability.p_dollars = center.config.p_dollars or 0
+    new_ability.t_mult = center.config.t_mult or 0
+    new_ability.t_chips = center.config.t_chips or 0
+    new_ability.x_mult = center.config.Xmult or center.config.x_mult or 1
+    new_ability.h_chips = center.config.h_chips or 0
+    new_ability.x_chips = center.config.x_chips or 1
+    new_ability.h_x_chips = center.config.h_x_chips or 1
+    new_ability.repetitions = center.config.repetitions or 0
+    new_ability.h_size = center.config.h_size or 0
+    new_ability.d_size = center.config.d_size or 0
+    new_ability.extra = copy_table(center.config.extra) or nil
+    new_ability.extra_value = 0
+    new_ability.type = center.config.type or ''
+    new_ability.order = center.order or nil
+    new_ability.forced_selection = self.ability and self.ability.forced_selection or nil
+    new_ability.perma_bonus = self.ability and self.ability.perma_bonus or 0
+    new_ability.perma_x_chips = self.ability and self.ability.perma_x_chips or 0
+    new_ability.perma_mult = self.ability and self.ability.perma_mult or 0
+    new_ability.perma_x_mult = self.ability and self.ability.perma_x_mult or 0
+    new_ability.perma_h_chips = self.ability and self.ability.perma_h_chips or 0
+    new_ability.perma_h_x_chips = self.ability and self.ability.perma_h_x_chips or 0
+    new_ability.perma_h_mult = self.ability and self.ability.perma_h_mult or 0
+    new_ability.perma_h_x_mult = self.ability and self.ability.perma_h_x_mult or 0
+    new_ability.perma_p_dollars = self.ability and self.ability.perma_p_dollars or 0
+    new_ability.perma_h_dollars = self.ability and self.ability.perma_h_dollars or 0
+    new_ability.perma_repetitions = self.ability and self.ability.perma_repetitions or 0
+    new_ability.card_limit = self.ability and self.ability.card_limit or 0
+    new_ability.extra_slots_used = self.ability and self.ability.extra_slots_used or 0
+    new_ability.perma_score = self.ability and self.ability.perma_score or 0
+    new_ability.perma_h_score = self.ability and self.ability.perma_h_score or 0
+    new_ability.perma_x_score = self.ability and self.ability.perma_x_score or 0
+    new_ability.perma_h_x_score = self.ability and self.ability.perma_h_x_score or 0
+    new_ability.perma_blind_size = self.ability and self.ability.perma_blind_size or 0
+    new_ability.perma_h_blind_size = self.ability and self.ability.perma_h_blind_size or 0
+    new_ability.perma_x_blind_size = self.ability and self.ability.perma_x_blind_size or 0
+    new_ability.perma_h_x_blind_size = self.ability and self.ability.perma_h_x_blind_size or 0
+    
+    self.ability = self.ability or {}
+    new_ability.extra_value = nil
+    new_ability.debuff_sources = {}
+    self.ability.extra_value = self.ability.extra_value or 0
+    for k, v in pairs(new_ability) do
+        self.ability[k] = v
+    end
+
+    -- handles card_limit/extra_slots_used changes
+    self.ability.card_limit = self.ability.card_limit + (center.config.card_limit or 0)
+    self.ability.extra_slots_used = self.ability.extra_slots_used + (center.config.extra_slots_used or 0)
+
+
+    -- reset keys do not persist on ability change
+    for _, k in ipairs(SMODS.get_ability_reset_keys(self) or {}) do
+        self.ability[k] = new_ability[k]
+    end
+
+    self.ability.bonus = (self.ability.bonus or 0) + (center.config.bonus or 0)
+    if not self.ability.name then self.ability.name = center.key end
+    for k, v in pairs(center.config) do
+        if k ~= 'bonus' then
+            if type(v) == 'table' then
+                self.ability[k] = copy_table(v)
+            else
+                self.ability[k] = v
+            end
+        end
+    end
+
+    if center.consumeable then 
+        self.ability.consumeable = center.config
+    end
+
+    if self.ability.name == "Invisible Joker" then 
+        self.ability.invis_rounds = 0
+    end
+    if self.ability.name == 'To Do List' then
+        local _poker_hands = {}
+        for k, v in pairs(G.GAME.hands) do
+            if SMODS.is_poker_hand_visible(k) then _poker_hands[#_poker_hands+1] = k end
+        end
+        local old_hand = self.ability.to_do_poker_hand
+        self.ability.to_do_poker_hand = nil
+
+        while not self.ability.to_do_poker_hand do
+            self.ability.to_do_poker_hand = pseudorandom_element(_poker_hands, pseudoseed((self.area and self.area.config.type == 'title') and 'false_to_do' or 'to_do'))
+            if self.ability.to_do_poker_hand == old_hand then self.ability.to_do_poker_hand = nil end
+        end
+    end
+    if self.ability.name == 'Caino' then 
+        self.ability.caino_xmult = 1
+    end
+    if self.ability.name == 'Yorick' then 
+        self.ability.yorick_discards = self.ability.extra.discards
+    end
+    if self.ability.name == 'Loyalty Card' then 
+        self.ability.burnt_hand = 0
+        self.ability.loyalty_remaining = self.ability.extra.every
+    end
+
+    self.ability.hands_played_at_create = G.GAME and G.GAME.hands_played or 0
+
+    local obj = self.config.center
+    if obj.set_ability and type(obj.set_ability) == 'function' then
+        obj:set_ability(self, false, nil)
+    end
+
+    EMPTY(new_ability)
+    self.from_quantum = nil
+end
+-- Fix visual glitch in deck select
+local g_funcs_change_viewed_back_ref = G.FUNCS.change_viewed_back
+G.FUNCS.change_viewed_back = function(...)
+	for _, card in pairs(G.sticker_card.area.cards) do
+		card.original_T = copy_table(card.T)
+	end
+	return g_funcs_change_viewed_back_ref(...)
+end
+
+--Patch to allow `type = "name_text"` to take vars
+local oldlocalize = localize
+function localize(args, misc_cat)
+    local ret = oldlocalize(args, misc_cat)
+
+    if type(args) == "table" and type(ret) == "string" and args.type == "name_text" and (args.vars) then
+        for k,v in pairs(args.vars) do
+            if type(k) == "number" then
+                ret = ret:gsub("#"..tostring(k).."#", tostring(v))
+            end
+        end
+    end
+
+    return ret
+end
+
+-- let's misuse this for blind size queue
+G.FUNCS.blind_chip_UI_scale = function(e)
+	if not (G.GAME.blind or {}).chips then return end
+	local blind_chips = G.GAME.blind.chips
+	if G.BLIND_SIZE_DISPLAY_QUEUE and G.BLIND_SIZE_DISPLAY_QUEUE[1] then
+		blind_chips = math.floor(G.BLIND_SIZE_DISPLAY_QUEUE[1])
+	end
+	G.GAME.blind.chip_text = number_format(blind_chips)
+    e.config.scale = scale_number(blind_chips, 0.7, 100000)
+end
+
+	-- patch all shaders on GLSL ES
+	-- stub shader
+    SMODS.shader_stub = love.graphics.newShader [[
+    vec4 effect(vec4 color, Image texture, vec2 tc, vec2 _) {
+        return Texel(texture, tc);
+    }
+    ]]
+    local mt = getmetatable(SMODS.shader_stub)
+	local send = mt.send
+	local sendColor = mt.sendColor
+	function mt:send(...)
+		if self == SMODS.shader_stub then
+			return
+		end
+		send(self, ...)
+	end
+	function mt:sendColor(...)
+		if self == SMODS.shader_stub then
+			return
+		end
+		sendColor(self, ...)
+	end
+
+    -- this is where the patching happens
+	-- code that gets here is usually already patched with its own buffer name. here we patch it as a second catchall buffer name
+    local newShader = love.graphics.newShader
+    function love.graphics.newShader(code, other_code)
+		-- this only supports a single argument passed as code, file names are not supported
+		-- only when we're running GLSL ES do we need to patch
+        if other_code or not string.find(code,'\n') or love.graphics.getRendererInfo() ~= "OpenGL ES" then
+			return newShader(code,other_code)
+		end
+
+        -- we can't patch if lovely is too old
+        local lovely_success, lovely = pcall(require, "lovely")
+        if not lovely_success then return newShader(code) end
+
+        local patched_code = assert(lovely.apply_patches(
+            "GLSL_ES_PATCHES.fs",
+            code
+        ))
+        local success, shader = pcall(newShader, patched_code)
+        if success then return shader end
+
+		-- -- Couldn't compile with patches. Try the original
+		local old_success, old_shader = pcall(newShader, code)
+		if old_success then return old_shader end
+
+        -- Neither worked
+		sendWarnMessage(("Failed to compile or patch shader for GLSL ES! Replacing affected shader with a stub that does nothing. To test on desktop, set LOVE_GRAPHICS_USE_OPENGLES=1 in your environment variables to run GLSL ES if supported. Patched shader code:\n%s\nError:\n%s"):format(patched_code, shader), "Shader")
+
+        return SMODS.shader_stub
+    end
+
+
+-- AnimatedSprite : Use obj.sprite_args and allow wrapping / overlapping frames / StateSprite args like flipped_h/v, frame_duration(s) and frame_order.
+function AnimatedSprite:init(X, Y, W, H, new_sprite_atlas, sprite_pos, args)
+	self.sprite_pos = sprite_pos or {x=0, y=0}
+    Sprite.init(self,X, Y, W, H, new_sprite_atlas, sprite_pos)
+    self.offset = {x = 0, y = 0}
+
+	self:load_sprite_args(args)
+
+    table.insert(G.ANIMATIONS, self)
+    if getmetatable(self) == AnimatedSprite then 
+        table.insert(G.I.SPRITE, self)
+    end
+end
+
+function AnimatedSprite:load_sprite_args(args)
+	self.sprite_args = args or {}
+	if self.atlas.sprite_args then 
+		for arg_key, v in pairs(self.atlas.sprite_args) do
+			if self.sprite_args[arg_key] == nil then self.sprite_args[arg_key] = v end
+		end
+	end
+	self.sprite_args.start_pos = self.sprite_args.start_pos or {}
+	self.sprite_args.start_pos.x = self.sprite_args.start_pos.x or self.sprite_pos.x or 0
+	self.sprite_args.start_pos.y = self.sprite_args.start_pos.y or self.sprite_pos.y or 0
+	self.sprite_args.frames = self.sprite_args.frames or self.sprite_args.end_pos and ((self.sprite_args.end_pos.x or self.sprite_args.start_pos.x) - self.sprite_args.start_pos.x + ((self.sprite_args.end_pos.y or self.sprite_args.start_pos.y) - self.sprite_args.start_pos.y) * self.atlas.columns + 1) or self.atlas.frames or 1
+	self.flipped_h = self.sprite_args.flipped_h or false
+	self.flipped_v = self.sprite_args.flipped_v or false
+	self:set_sprite_pos(self.sprite_pos)
+end
+
+function AnimatedSprite:animate()
+	if not self.current_animation or not self.current_animation.frames then return end
+    local frame_finished = (math.floor((G.TIMERS.REAL - self.offset_seconds) / self.current_animation.frame_duration)) > 0
+    if frame_finished then
+        self.current_animation.current = SMODS.get_new_frame(self, self.sprite_args.frame_order)
+		local frame_duration = (self.sprite_args.frame_durations or {})[self.current_animation.current+1] or self.sprite_args.frame_duration or 1
+		local fps = self.sprite_args.fps or self.atlas.fps or G.ANIMATION_FPS
+        self.current_animation.frame_duration = frame_duration / fps
+        local _x = self.animation.w * ((self.sprite_args.start_pos.x + self.current_animation.current) % self.atlas.columns)
+        local _y = self.animation.h * (self.sprite_args.start_pos.y + math.floor(self.current_animation.current / self.atlas.columns))
+        self.sprite:setViewport(
+            _x,
+            _y,
+            self.animation.w,
+            self.animation.h
+        )
+        self.offset_seconds = G.TIMERS.REAL
+    end
+    if self.float then 
+        self.T.r = 0.02*math.sin(2*G.TIMERS.REAL+self.T.x)
+        self.offset.y = -(1+0.3*math.sin(0.666*G.TIMERS.REAL+self.T.y))*self.shadow_parrallax.y
+        self.offset.x = -(0.7+0.2*math.sin(0.666*G.TIMERS.REAL+self.T.x))*self.shadow_parrallax.x
+    end
+end
+
+function AnimatedSprite:rescale() end -- Functionality unclear / deprecated, self.scale_mag is not used anymore, instead love.graphics.scale is called with live values. 
+
+function AnimatedSprite:draw_self()
+    if not self.states.visible then return end
+
+    prep_draw(self, 1)
+    love.graphics.scale(1/(self.scale.x/self.VT.w), 1/(self.scale.y/self.VT.h))
+    love.graphics.setColor(G.C.WHITE)
+    love.graphics.draw(
+        self.atlas.image, 
+        self.sprite,
+        (self.flipped_h and self.atlas.px or 0), (self.flipped_v and self.atlas.py or 0),
+        0,
+        self.VT.w/(self.T.w) * (self.flipped_h and -1 or 1),
+        self.VT.h/(self.T.h) * (self.flipped_v and -1 or 1)
+    )
+    love.graphics.pop()
+end
+
+function AnimatedSprite:set_sprite_pos(sprite_pos)
+	if not self.sprite_args then return end
+    self.animation = {
+        x= sprite_pos and sprite_pos.x or 0,
+        y= sprite_pos and sprite_pos.y or 0,
+        frames= self.sprite_args.frames or self.atlas.frames or 1, current=0,
+        w=self.scale.x, h=self.scale.y}
+	
+	local frame_duration = (self.sprite_args.frame_durations or {})[1] or self.sprite_args.frame_duration or 1
+	local fps = self.sprite_args.fps or self.atlas.fps or G.ANIMATION_FPS
+    self.current_animation = {
+        current = 0,
+        frames = self.animation.frames,
+        w = self.animation.w,
+        h = self.animation.h,
+		frame_index = 0,
+		frame_duration = frame_duration / fps
+	}
+
+    self.image_dims = self.image_dims or {}
+    self.image_dims[1], self.image_dims[2] = self.atlas.image:getDimensions()
+
+    self.sprite = love.graphics.newQuad( 
+		self.animation.w*self.animation.x,
+        self.animation.h*self.animation.y,
+		self.animation.w,
+		self.animation.h,
+		self.image_dims[1], self.image_dims[2])
+    self.offset_seconds = G.TIMERS.REAL
+end
+
+function AnimatedSprite:get_pos_pixel()
+    self.RETS.get_pos_pixel = self.RETS.get_pos_pixel or {}
+    self.RETS.get_pos_pixel[1] = ((self.sprite_args.start_pos.x + self.current_animation.current) % self.atlas.columns)
+    self.RETS.get_pos_pixel[2] = (self.sprite_args.start_pos.y + math.floor(self.current_animation.current / self.atlas.columns))
+    self.RETS.get_pos_pixel[3] = self.animation.w
+    self.RETS.get_pos_pixel[4] = self.animation.h
+    return self.RETS.get_pos_pixel
 end

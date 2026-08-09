@@ -1,7 +1,7 @@
 ---@meta
 
 ---@class SMODS.Suit: SMODS.GameObject
----@field obj_buffer? Suits|string[] Array of keys to all objects registered to this class.
+---@field obj_buffer? Suits[]|string[] Array of keys to all objects registered to this class.
 ---@field obj_table? table<Suits|string, SMODS.Suit|table> Table of objects registered to this class. 
 ---@field loc_txt? table|{singular: string, plural: string} Contains strings used for displaying text related to this object. 
 ---@field super? SMODS.GameObject|table Parent class. 
@@ -15,6 +15,7 @@
 ---@field hc_ui_atlas? string Atlas used for high-contrast mini suit symbol in deck view. 
 ---@field lc_colour? Color HEX color of the suit text for low-contrast. 
 ---@field hc_colour? Color HEX color of the suit text for high-contrast. 
+---@field shade? string A string that identifies a "shade" for the suit, e.g. "light" and "dark" suits.
 ---@field __call? fun(self: SMODS.Suit|table, o: SMODS.Suit|table): nil|table|SMODS.Suit
 ---@field extend? fun(self: SMODS.Suit|table, o: SMODS.Suit|table): table Primary method of creating a class. 
 ---@field check_duplicate_register? fun(self: SMODS.Suit|table): boolean? Ensures objects already registered will not register. 

@@ -1,7 +1,7 @@
 ---@meta
 
 ---@class SMODS.Edition: SMODS.Center
----@field obj_buffer? Editions|string[] Array of keys to all objects registered to this class. 
+---@field obj_buffer? Editions[]|string[] Array of keys to all objects registered to this class. 
 ---@field obj_table? table<Editions|string, SMODS.Edition|table> Table of objects registered to this class. 
 ---@field loc_txt? table|{name: string|string[], text: string[]|string[][], label: string} Contains strings used for displaying text related to this object. 
 ---@field shader? string|false Key to the shader drawn on cards with this Edition. If set to `false`, a shader will not be drawn. 
@@ -10,7 +10,8 @@
 ---@field in_shop? boolean Sets if the Edition spawns naturally in the shop. 
 ---@field weight? number The weight of the Edition. 
 ---@field extra_cost? number Extra cost applied to cards in the shop with this Edition. 
----@field apply_to_float? boolean Sets if the shader is drawn on floating sprites. 
+---@field apply_to_float? boolean Sets if the shader is drawn on floating sprites.
+---@field text_colour? Color Colour of the label for the badge.
 ---@field badge_colour? Color HEX color of the Edition's badge
 ---@field sound? table|{sound: string, per?: number, vol?: number} Used to set a custom sound when the Edition is applied. 
 ---@field disable_shadow? boolean Sets if the shadow is drawn under the card with this Edition. 
@@ -37,6 +38,7 @@
 ---@field draw? fun(self: SMODS.Edition|table, card: Card|table, layer: string) Draws the edition's shader. By default, `self.shader` is drawn. 
 ---@field get_edition_cards? fun(self: SMODS.Edition|table, card_area: CardArea|table, edition: boolean): table
 ---@field in_pool? fun(self: SMODS.Edition|table, args: table|{source: string}): boolean? Allows configuring if the edition is allowed to spawn.
+---@field calc_scaling? fun(self: SMODS.Edition|table, card: Card|table, other_card: Card|table, scaling_value: number, scalar_value: number, args: table): table? @**[DEPRECATED]** Use `calculate` with `context.scaling_card` instead. ~Called by `SMODS.scale_card`. Allows detection and modification of cards when scaling values. The return may include a `scaling_value` or `scalar_value` field to modify those values or any standard calculation return.~
 ---@overload fun(self: SMODS.Edition): SMODS.Edition
 SMODS.Edition = setmetatable({}, {
     __call = function(self)
@@ -58,3 +60,8 @@ function Card:calculate_edition(context) end
 ---@return Editions|string?
 --- Polls editions. Returns the key of the edition if successful. 
 function poll_edition(_key, _mod, _no_neg, _guaranteed, _options) end
+
+---@param args table|{key?: string, mod?: number, guaranteed?: boolean, options?: table, no_negative?: boolean}
+---@return Editions|string?
+--- Polls editions. Returns the key of the edition if successful. 
+function SMODS.poll_edition(args) end

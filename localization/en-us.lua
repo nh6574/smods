@@ -142,6 +142,86 @@ return {
                     "card {C:attention}#1#{} #2#",
                 },
             },
+            card_score = {
+                text = {
+                    "{C:purple}#1#{} Score",
+                },
+            },
+            card_h_score = {
+                text = {
+                    "{C:purple}#1#{} Score when held",
+                },
+            },
+            card_x_score = {
+                text = {
+                    "{X:purple,C:white}X#1#{} Score",
+                },
+            },
+            card_h_x_score = {
+                text = {
+                    "{X:purple,C:white}X#1#{} Score when held",
+                },
+            },
+            card_extra_score = {
+                text = {
+                    "{C:purple}#1#{} extra Score",
+                },
+            },
+            card_extra_h_score = {
+                text = {
+                    "{C:purple}#1#{} extra Score when held",
+                },
+            },
+            card_extra_x_score = {
+                text = {
+                    "{X:purple,C:white}X#1#{} extra Score",
+                },
+            },
+            card_extra_h_x_score = {
+                text = {
+                    "{X:purple,C:white}X#1#{} extra Score when held",
+                },
+            },
+            card_blind_size = {
+                text = {
+                    "{C:blind}#1#{} Blind Size",
+                },
+            },
+            card_h_blind_size = {
+                text = {
+                    "{C:blind}#1#{} Blind Size when held",
+                },
+            },
+            card_x_blind_size = {
+                text = {
+                    "{X:blind,C:white}X#1#{} Blind Size",
+                },
+            },
+            card_h_x_blind_size = {
+                text = {
+                    "{X:blind,C:white}X#1#{} Blind Size when held",
+                },
+            },
+            card_extra_blind_size = {
+                text = {
+                    "{C:blind}#1#{} extra Blind Size",
+                },
+            },
+            card_extra_h_blind_size = {
+                text = {
+                    "{C:blind}#1#{} extra Blind Size when held",
+                },
+            },
+            card_extra_x_blind_size = {
+                text = {
+                    "{X:blind,C:white}X#1#{} extra Blind Size",
+                },
+            },
+            card_extra_h_x_blind_size = {
+                text = {
+                    "{X:blind,C:white}X#1#{} extra Blind Size when held",
+                },
+            },
             artist = {
                 text = {
                     "{C:inactive}Artist",
@@ -153,6 +233,47 @@ return {
                     "{E:1}#1#{}"
                 },
             },
+            generic_card_limit = {
+                name = "Card Limit",
+                text = {
+                    '{C:dark_edition}#1#{} area slot'
+                }
+            },
+            generic_card_limit_plural = {
+                name = "Card Limit",
+                text = {
+                    '{C:dark_edition}#1#{} area slots'
+                }
+            },
+            generic_card_limit_pc = {
+                name = "Hand Size",
+                text = {
+                    '{C:dark_edition}#1#{} hand size'
+                }
+            },
+            generic_card_limit_pc_plural = {
+                name = "Hand Size",
+                text = {
+                    '{C:dark_edition}#1#{} hand size'
+                }
+            },
+            generic_extra_slots = {
+                name = "Slots Used",
+                text = {
+                    'Fills {C:dark_edition}#1#{} slots'
+                }
+            },
+            generic_extra_slots_pc = {
+                name = "Hand Space",
+                text = {
+                    'Fills {C:dark_edition}#1#{} hand space'
+                }
+            },
+            card_chips_minus = {
+                text = {
+                    '{C:chips}#1#{} chips'
+                }
+            },
         },
         Edition = {
             e_negative_playing_card = {
@@ -161,6 +282,12 @@ return {
                     "{C:dark_edition}+#1#{} hand size"
                 },
             },
+            e_negative_generic = {
+                name = "Negative",
+                text = {
+                    "{C:dark_edition}+#1#{} area slot"
+                },
+            }
         },
         Enhanced = {
             m_gold={
@@ -218,6 +345,10 @@ return {
             b_github_bugs_1 = 'You can report bugs and',
             b_github_bugs_2 = 'submit contributions there.',
             b_disable_mod_badges = 'Disable Mod Badges',
+            b_vanilla_run_select = 'Vanilla Run Select',
+            b_vanilla_run_select_info = 'This toggle is ignored if extra pages are added by mods',
+            b_run_select_reduce = 'Run Select Performance Mode',
+            b_run_select_reduce_info = 'Reduces number of cards drawn and removes animations',
             b_author = 'Author',
             b_authors = 'Authors',
             b_unknown = 'Unknown',
@@ -246,13 +377,32 @@ return {
             b_deckskins_def = 'Default Colours',
             b_limit = 'Up to ',
             b_retrigger_single = 'time',
-            b_retrigger_plural = 'times'
+            b_retrigger_plural = 'times',
+			k_enhanced = 'Enhancement',
+            run_select_locked_stake = "Locked",
+            run_select_locked_stake_message = "Win with this deck on ",
+            run_select_locked_stake_and = " and ",
+            run_select_nothing = 'Nothing',
+            run_select_selected = 'SELECTED',
+            run_select_quick_start = 'Quick Start',
+            run_select_play = 'Play',
+            run_setup_enable_seed = 'Enable Seed',
+            run_select_deck_choice = 'Select Deck',
+            run_select_stake_choice = 'Select Stake',
+            run_select_deck_choice_random = 'Random Deck',
+            run_select_stake_choice_random = 'Random Stake',
 		},
 		v_dictionary = {
 			c_types = '#1# Types',
 			cashout_hidden = '...and #1# more',
             a_xchips = "X#1# Chips",
             a_xchips_minus = "-X#1# Chips",
+            a_score="#1# Score",
+            a_xscore="X#1# Score",
+            a_xscore_minus="-X#1# Score",
+            a_blind_size="#1# Blind Size",
+            a_xblind_size="X#1# Blind Size",
+            a_xblind_size_minus="-X#1# Blind Size",
             smods_version_mismatch = {
                 "Your Steamodded version has changed",
                 "since this run was started!",

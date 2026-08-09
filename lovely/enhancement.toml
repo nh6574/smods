@@ -141,40 +141,6 @@ payload = """if not SMODS.has_no_suit(scoring_hand[i]) then
     G.GAME.cards_played[scoring_hand[i].base.value].suits[scoring_hand[i].base.suit] = true
 end"""
 
-# Add the delayed property to sprites that are delayed
-[[patches]]
-[patches.pattern]
-target = 'card.lua'
-match_indent = true
-position = 'at'
-pattern = '''
-if delay_sprites then 
-    G.E_MANAGER:add_event(Event({
-        func = function()
-            if not self.REMOVED then
-                self:set_sprites(center)
-            end
-            return true
-        end
-    })) 
-'''
-payload = '''
-if delay_sprites == 'quantum' or delay_sprites == 'manual' then
-elseif delay_sprites then 
-    self.ability.delayed = true
-    G.E_MANAGER:add_event(Event({
-        func = function()
-            if not self.REMOVED then
-                self:set_sprites(center)
-                self.ability.delayed = false
-            end
-            return true
-        end
-    })) 
-'''
-
-
-
 # Card:generate_UIBox_ability_table()
 # replaces two consecutive lines
 [[patches]]
@@ -297,11 +263,18 @@ match_indent = true
 target = "card.lua"
 pattern = "function Card:set_ability(center, initial, delay_sprites)"
 position = "after"
-payload = '''  SMODS.enh_cache:write(self, nil)
+payload = '''
+    SMODS.enh_cache:write(self, nil)
+
+    if self.ability and not initial then
+        self.ability.card_limit = self.ability.card_limit - (self.config.center.config.card_limit or 0)
+        self.ability.extra_slots_used = self.ability.extra_slots_used - (self.config.center.config.extra_slots_used or 0)
+    end
   
-  if self.ability and not initial then
-    self.front_hidden = self:should_hide_front()
-  end'''
+    if self.ability and not initial then
+        self.front_hidden = self:should_hide_front()
+    end
+'''
 match_indent = true
 
 # replace_base_card Fix Part 2
@@ -311,6 +284,7 @@ target = "card.lua"
 pattern = "self:set_sprites(center)"
 position = "after"
 payload = '''if self.ability and not initial then
+  self.delay_center = nil
   self.front_hidden = self:should_hide_front()
 end'''
 match_indent = true
@@ -321,7 +295,7 @@ match_indent = true
 target = "card.lua"
 pattern = "if not G.OVERLAY_MENU then "
 position = "before"
-payload = '''if self.ability and not initial then
+payload = '''if self.ability and not initial and not delay_sprites then
   self.front_hidden = self:should_hide_front()
 end'''
 match_indent = true
@@ -338,7 +312,13 @@ match_indent = true
 target = "card.lua"
 pattern = "function Card:set_seal(_seal, silent, immediate)"
 position = "after"
-payload = "SMODS.enh_cache:write(self, nil)"
+payload = '''
+    SMODS.enh_cache:write(self, nil)
+    if self.seal then
+        self.ability.card_limit = self.ability.card_limit - (self.ability.seal.card_limit or 0)
+        self.ability.extra_slots_used = self.ability.extra_slots_used - (self.ability.seal.extra_slots_used or 0)
+    end
+'''
 match_indent = true
 
 # safeguards an infloop with debuff context
@@ -347,5 +327,5 @@ match_indent = true
 target = 'card.lua'
 pattern = 'if not initial then G.GAME.blind:debuff_card(self) end'
 position = 'at'
-payload = 'if not initial and delay_sprites ~= "quantum" and G.GAME.blind then G.GAME.blind:debuff_card(self) end'
+payload = 'if not initial and G.GAME.blind then G.GAME.blind:debuff_card(self) end'
 match_indent = true

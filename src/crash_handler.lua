@@ -492,6 +492,18 @@ end
 -- Note: The below code is not from the original StackTracePlus.lua
 local stackTraceAlreadyInjected = false
 
+local function doRestart()
+    if SMODS and SMODS.restart_game then
+        SMODS.restart_game()
+    else
+        local test, msg = pcall(function()
+            require"lovely".reload_patches()
+        end)
+        if not test then sendErrorMessage("Failed to reload patches... " .. tostring(msg), "StackTrace") end
+        love.event.quit("restart")
+    end
+end
+
 function getDebugInfoForCrash()
     local version = VERSION
     if not version or type(version) ~= "string" then
@@ -514,6 +526,25 @@ function getDebugInfoForCrash()
 
     local info = "Additional Context:\nBalatro Version: " .. version .. "\nModded Version: " ..
                      (modded_version)
+    
+    local t = "\nOptional features enabled: "
+    local any_enabled
+    for k, v in pairs(SMODS.optional_features) do
+        if type(v) == 'table' then
+            if next(v) then                        
+                t = t .. k .. ' ('
+                for a, _ in pairs(v) do t = t .. a .. ', ' end
+                t = t:sub(1,-3) .. '), '
+                any_enabled = true
+            end
+        else
+            t = t .. k .. ', '
+            any_enabled = true
+        end
+    end
+    t = any_enabled and t:sub(1,-3) or (t .. "None")
+    info = info .. t
+
     local major, minor, revision, codename = love.getVersion()
     info = info .. string.format("\nLÖVE Version: %d.%d.%d", major, minor, revision)
     local lovely_success, lovely = pcall(require, "lovely")
@@ -659,8 +690,11 @@ function injectStackTrace()
 
         local err = {}
 
-        table.insert(err, "Oops! The game crashed:")
-        if sanitizedmsg:find("Syntax error: game.lua:4: '=' expected near 'Game'") then
+        if not smods_dupe then table.insert(err, "Oops! The game crashed:") end
+        
+        if smods_dupe then
+            table.insert(err, 'Duplicate installation of Steamodded detected! \n\nPlease remove the duplicate steamodded/smods folder/zip in your mods folder.\n\nPossible location: ' .. smods_dupe)
+        elseif sanitizedmsg:find("Syntax error: game.lua:4: '=' expected near 'Game'") then
             table.insert(err,
                 'Duplicate installation of Steamodded detected! Please clean your installation: Steam Library > Balatro > Properties > Installed Files > Verify integrity of game files.')
         elseif sanitizedmsg:find("Syntax error: game.lua:%d+: duplicate label 'continue'") then
@@ -673,9 +707,24 @@ function injectStackTrace()
             table.insert(err, "Invalid UTF-8 string in error message.")
         end
 
+        if V and SMODS and SMODS.save_game and V(SMODS.save_game or '0.0.0') ~= V(SMODS.version or '0.0.0') then
+            table.insert(err, 'This crash may be caused by continuing a run that was started on a previous version of Steamodded. Try creating a new run.')
+        end
+
+        if V and V(MODDED_VERSION or '0.0.0') ~= V(RELEASE_VERSION or '0.0.0') then
+            table.insert(err, '\n\nDevelopment version of Steamodded detected! If you are not actively developing a mod, please try using the latest release instead.\n\n')
+        end
+
+        if not V and not smods_dupe then
+            table.insert(err, '\nA mod you have installed has caused a syntax error through patching. Please share this crash with the mod developer.\n')            
+        end
+
         local success, msg = pcall(getDebugInfoForCrash)
-        if success and msg then
+        if smods_dupe then
+            trace = ''
+        elseif success and msg then
             table.insert(err, '\n' .. msg)
+
             sendInfoMessage(msg, 'StackTrace')
         else
             table.insert(err, "\n" .. "Failed to get additional context :/")
@@ -791,13 +840,13 @@ function injectStackTrace()
 
             for e, a, b, c in love.event.poll() do
                 if e == "quit" then
-                    return 1
+                    return a or 0
                 elseif e == "keypressed" and a == "escape" then
                     return 1
                 elseif e == "keypressed" and a == "c" and love.keyboard.isDown("lctrl", "rctrl") then
                     copyToClipboard()
                 elseif e == "keypressed" and a == "r" then
-                    SMODS.restart_game()
+                    doRestart()
                 elseif e == "keypressed" and a == "down" then
                     scrollDown()
                 elseif e == "keypressed" and a == "up" then
@@ -817,7 +866,7 @@ function injectStackTrace()
                 elseif e == "gamepadpressed" and b == "dpup" then
                     scrollUp()
                 elseif e == "gamepadpressed" and b == "a" then
-                    return "restart"
+                    doRestart()
                 elseif e == "gamepadpressed" and b == "x" then
                     copyToClipboard()
                 elseif e == "gamepadpressed" and (b == "b" or b == "back" or b == "start") then
@@ -835,7 +884,7 @@ function injectStackTrace()
                     if pressed == 1 then
                         return 1
                     elseif pressed == 3 then
-                        return "restart"
+                        doRestart()
                     elseif pressed == 4 then
                         copyToClipboard()
                     end
