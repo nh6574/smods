@@ -1490,6 +1490,9 @@ SMODS.calculate_individual_effect = function(effect, scored_card, key, amount, f
                 effect.cashout_row.bonus = true
                 effect.cashout_row.pitch = SMODS.cashout_pitch
                 effect.cashout_row.dollars = effect.cashout_row.dollars or amount
+                effect.cashout_row.text = type(effect.cashout_row.text) == "table" and effect.cashout_row.text or {string = effect.cashout_row.text or ''}
+                effect.cashout_row.text.colour = effect.cashout_row.text.colour or effect.cashout_row.text_colour or G.C.FILTER
+                effect.cashout_row.text.scale = effect.cashout_row.text.scale or effect.cashout_row.scale or 0.6
                 SMODS.add_round_eval_row(effect.cashout_row)
             else
                 SMODS.add_round_eval_row({dollars = amount, bonus = true, id='joker'..SMODS.cashout_index, pitch = SMODS.cashout_pitch, card = scored_card})
